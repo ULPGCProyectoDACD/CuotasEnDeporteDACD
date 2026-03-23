@@ -15,11 +15,6 @@ public class OddsApiRequest {
         String markets = "h2h,totals";
         String oddsFormat = "decimal";
 
-        if (apiKey == null) {
-            System.err.println("Error: Variable 'ODDS_API_KEY' no encontrada.");
-            return;
-        }
-
         String url = String.format(
                 "https://api.the-odds-api.com/v4/sports/%s/odds/?apiKey=%s&regions=%s&markets=%s&oddsFormat=%s",
                 sportKey, apiKey, regions, markets, oddsFormat
@@ -33,13 +28,9 @@ public class OddsApiRequest {
 
         try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
                 System.out.println("--- DATOS DE LA LIGA ESPAÑOLA ---");
                 System.out.println(response.body());
-            } else {
-                System.out.println("Error " + response.statusCode() + ": " + response.body());
-            }
+
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
