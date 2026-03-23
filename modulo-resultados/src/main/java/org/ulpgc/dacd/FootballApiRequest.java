@@ -5,30 +5,37 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
+
 
 public class FootballApiRequest {
 
-        public static void main(String[] args) {
-            HttpClient client = HttpClient.newHttpClient();
+    private static final String BASE_URL = "https://v3.football.api-sports.io/fixtures?league=140&season=";
+    private static final List<Integer> SEASONS = List.of(2022, 2023, 2024);
+    private static final String API_KEY = System.getenv("API_SPORTS_KEY");
+    private static final HttpClient CLIENT = HttpClient.newHttpClient();
 
-            String apiKey = System.getenv("API_SPORTS_KEY");
-            String url = "https://v3.football.api-sports.io/leagues?season=2024&country=england&type=league";
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("x-apisports-key", apiKey)
-                    .header("Accept", "application/json")
-                    .GET()
-                    .build();
-
+    public static void main(String[] args) {
+        for (int season : SEASONS) {
             try {
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                System.out.println("Status Code: " + response.statusCode());
-                System.out.println("Response Body: " + response.body());
-
+                String body = response(season);
             } catch (IOException | InterruptedException e) {
-                System.err.println("Error en la conexión: " + e.getMessage());
+                System.err.println("Error temporada " + season + ": " + e.getMessage());
             }
         }
     }
+
+    private static String response(int season) throws IOException, InterruptedException {
+        HttpResponse<String> response = CLIENT.send(buildRequest(season), HttpResponse.BodyHandlers.ofString());
+        return response.body();
+    }
+
+    private static HttpRequest buildRequest(int season) {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + season))
+                .header("x-apisports-key", API_KEY)
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+    }
+}
