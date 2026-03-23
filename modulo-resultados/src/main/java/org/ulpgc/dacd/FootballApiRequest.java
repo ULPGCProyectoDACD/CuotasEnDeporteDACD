@@ -18,16 +18,16 @@ public class FootballApiRequest {
     public static void main(String[] args) {
         for (int season : SEASONS) {
             try {
-                String body = response(season);
+                String body = response(season).body();
             } catch (IOException | InterruptedException e) {
                 System.err.println("Error temporada " + season + ": " + e.getMessage());
             }
         }
     }
 
-    private static String response(int season) throws IOException, InterruptedException {
+    private static HttpResponse<String> response(int season) throws IOException, InterruptedException {
         HttpResponse<String> response = CLIENT.send(buildRequest(season), HttpResponse.BodyHandlers.ofString());
-        return response.body();
+        return response;
     }
 
     private static HttpRequest buildRequest(int season) {
