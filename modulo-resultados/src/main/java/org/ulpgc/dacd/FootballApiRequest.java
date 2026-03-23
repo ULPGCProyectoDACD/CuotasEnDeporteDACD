@@ -19,6 +19,7 @@ public class FootballApiRequest {
         for (int season : SEASONS) {
             try {
                 String body = response(season).body();
+                System.out.println(body);
             } catch (IOException | InterruptedException e) {
                 System.err.println("Error temporada " + season + ": " + e.getMessage());
             }
