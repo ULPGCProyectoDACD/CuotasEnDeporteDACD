@@ -5,11 +5,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 
 public class OddsApiRequest {
 
     private static final String ODDS_API_KEY = System.getenv("ODDS_API_KEY");
-
     private static final String LIGA = "soccer_spain_la_liga";
     private static final String REGIONS = "eu";
     private static final String MARKETS = "h2h,totals";
@@ -18,17 +18,26 @@ public class OddsApiRequest {
             "https://api.the-odds-api.com/v4/sports/%s/odds/?apiKey=%s&regions=%s&markets=%s&oddsFormat=%s",
             LIGA, ODDS_API_KEY, REGIONS, MARKETS, ODDS_FORMAT
     );
-    private static final HttpRequest HTTP_REQUEST = HttpRequest.newBuilder().uri(URI.create(BASE_URL)).GET().build();
-    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
-    
+    private static final HttpClient CLIENT = HttpClient.newHttpClient();
+
     public static void main(String[] args) {
         try {
-            HttpResponse<String> response = HTTP_CLIENT.send(HTTP_REQUEST, HttpResponse.BodyHandlers.ofString());
-                System.out.println("--- DATOS DE LA LIGA ESPAÑOLA ---");
-                System.out.println(response.body());
-
+            String body = response().body();
+            List<Odd> odds = OddsNormalize.parseOdds(body);
+            System.out.println("Success! Extracted " + odds.size() + " odds for La Liga");
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            System.err.println("Error fetching odds: " + e.getMessage());
         }
+    }
+
+    private static HttpResponse<String> response() throws IOException, InterruptedException {
+        return CLIENT.send(buildRequest(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private static HttpRequest buildRequest() {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL))
+                .GET()
+                .build();
     }
 }

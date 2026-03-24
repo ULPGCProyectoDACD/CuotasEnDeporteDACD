@@ -11,8 +11,9 @@ import java.util.List;
 
 public class MatchNormalize {
 
+    private static Gson gson = new Gson();
+
     public static List<Match> parseMatches(String rawJson) {
-        Gson gson = new Gson();
         JsonObject jsonObject = JsonParser.parseString(rawJson).getAsJsonObject();
         JsonArray matchesArray = jsonObject.getAsJsonArray("response");
         Type listType = new TypeToken<List<Match>>(){}.getType();
