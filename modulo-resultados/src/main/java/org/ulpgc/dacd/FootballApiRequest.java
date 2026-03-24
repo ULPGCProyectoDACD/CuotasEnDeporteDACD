@@ -19,7 +19,8 @@ public class FootballApiRequest {
         for (int season : SEASONS) {
             try {
                 String body = response(season).body();
-                System.out.println(body);
+                List<Match> matches = MatchNormalize.parseMatches(body);
+                System.out.println("Success! Extracted " + matches.size() + " matches for season " + season);
             } catch (IOException | InterruptedException e) {
                 System.err.println("Error temporada " + season + ": " + e.getMessage());
             }
