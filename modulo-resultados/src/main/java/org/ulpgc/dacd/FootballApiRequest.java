@@ -16,11 +16,13 @@ public class FootballApiRequest {
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
 
     public static void main(String[] args) {
+        MatchDatabase.initializeDatabase();
         for (int season : SEASONS) {
             try {
                 String body = response(season).body();
                 List<Match> matches = MatchNormalize.parseMatches(body);
                 System.out.println("Success! Extracted " + matches.size() + " matches for season " + season);
+                MatchDatabase.saveMatches(matches);
             } catch (IOException | InterruptedException e) {
                 System.err.println("Error temporada " + season + ": " + e.getMessage());
             }

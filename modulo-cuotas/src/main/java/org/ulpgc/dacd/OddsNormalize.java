@@ -7,8 +7,6 @@ import java.util.stream.StreamSupport;
 
 public class OddsNormalize {
 
-    private static final Gson GSON = new Gson();
-
     public static List<Odd> parseOdds(String rawJson) {
         return toStream(JsonParser.parseString(rawJson).getAsJsonArray())
                 .map(JsonElement::getAsJsonObject)
@@ -32,7 +30,8 @@ public class OddsNormalize {
                 .toList();
     }
 
-    private static List<Odd> extractOddsFromMarket(MatchContext matchContext, BookmakerContext bookmakerContext, JsonObject market) {
+    private static List<Odd> extractOddsFromMarket(MatchContext matchContext, BookmakerContext bookmakerContext,
+            JsonObject market) {
         String marketKey = market.get("key").getAsString();
         return toStream(market.getAsJsonArray("outcomes"))
                 .map(JsonElement::getAsJsonObject)
@@ -47,8 +46,7 @@ public class OddsNormalize {
                 outcome.get("name").getAsString(),
                 outcome.get("price").getAsDouble(),
                 parseNullableDouble(outcome, "point"),
-                bookmaker.lastUpdate()
-        );
+                bookmaker.lastUpdate());
     }
 
     private static MatchContext parseMatchContext(JsonObject match) {
@@ -57,16 +55,14 @@ public class OddsNormalize {
                 match.get("sport_key").getAsString(),
                 match.get("home_team").getAsString(),
                 match.get("away_team").getAsString(),
-                match.get("commence_time").getAsString()
-        );
+                match.get("commence_time").getAsString());
     }
 
     private static BookmakerContext parseBookmakerContext(JsonObject bookmaker) {
         return new BookmakerContext(
                 bookmaker.get("key").getAsString(),
                 bookmaker.get("title").getAsString(),
-                bookmaker.get("last_update").getAsString()
-        );
+                bookmaker.get("last_update").getAsString());
     }
 
     private static Double parseNullableDouble(JsonObject obj, String field) {
@@ -77,6 +73,9 @@ public class OddsNormalize {
         return StreamSupport.stream(array.spliterator(), false);
     }
 
-    private record MatchContext(String id, String sportKey, String homeTeam, String awayTeam, String commenceTime) {}
-    private record BookmakerContext(String key, String title, String lastUpdate) {}
+    private record MatchContext(String id, String sportKey, String homeTeam, String awayTeam, String commenceTime) {
+    }
+
+    private record BookmakerContext(String key, String title, String lastUpdate) {
+    }
 }

@@ -26,3 +26,9 @@ replay_pid*
 # IntelliJ IDEA
 .idea/
 *.iml
+
+# SQLite database
+data/
+
+# Maven build output
+target/
