@@ -1,65 +1,44 @@
 package org.ulpgc.dacd;
 
-import com.google.gson.annotations.SerializedName;
+import java.time.LocalDateTime;
 
-public record Match(
-        Fixture fixture,
-        League league,
-        Teams teams,
-        Goals goals,
-        Score score
-) {
+public class Match {
+    private final int id;
+    private final Team homeTeam;
+    private final Team awayTeam;
+    private final int homeGoals;
+    private final int awayGoals;
+    private final LocalDateTime date;
+    private final String status;
+    private final Referee referee;
+    private final LocalDateTime capturedAt;
 
-    public record Fixture(
-            Integer id,
-            String referee,
-            String timezone,
-            String date,
-            Long timestamp,
-            Periods periods,
-            Venue venue,
-            Status status
-    ) {}
+    public Match(int id, Team homeTeam, Team awayTeam, int homeGoals, int awayGoals, LocalDateTime date, String status, Referee referee, LocalDateTime capturedAt) {
+        this.id = id;
+        this.homeTeam = homeTeam;
+        this.awayTeam = awayTeam;
+        this.homeGoals = homeGoals;
+        this.awayGoals = awayGoals;
+        this.date = date;
+        this.status = status;
+        this.referee = referee;
+        this.capturedAt = capturedAt;
+    }
 
-    public record Periods(Long first, Long second) {}
+    public int getId() { return id; }
+    public Team getHomeTeam() { return homeTeam; }
+    public Team getAwayTeam() { return awayTeam; }
+    public int getHomeGoals() { return homeGoals; }
+    public int getAwayGoals() { return awayGoals; }
+    public LocalDateTime getDate() { return date; }
+    public String getStatus() { return status; }
+    public Referee getReferee() { return referee; }
+    public LocalDateTime getCapturedAt() { return capturedAt; }
 
-    public record Venue(Integer id, String name, String city) {}
-
-    public record Status(
-            @SerializedName("long") String statusLong,
-            @SerializedName("short") String statusShort,
-            Integer elapsed,
-            Integer extra
-    ) {}
-
-    public record League(
-            Integer id,
-            String name,
-            String country,
-            String logo,
-            String flag,
-            Integer season,
-            String round,
-            Boolean standings
-    ) {}
-
-    public record Teams(Team home, Team away) {}
-
-    public record Team(
-            Integer id,
-            String name,
-            String logo,
-            Boolean winner
-    ) {}
-
-    public record Goals(Integer home, Integer away) {}
-
-    public record Score(
-            ScoreDetail halftime,
-            ScoreDetail fulltime,
-            ScoreDetail extratime,
-            ScoreDetail penalty
-    ) {}
-
-    public record ScoreDetail(Integer home, Integer away) {}
+    @Override
+    public String toString() {
+        String refereeName = (referee != null) ? referee.getName() : "Sin asignar";
+        return String.format("[%s] %s %d - %d %s (Status: %s) | Árbitro: %s",
+                date.toLocalDate(), homeTeam.getName(), homeGoals, awayGoals, awayTeam.getName(), status, refereeName);
+    }
 }
