@@ -1,7 +1,6 @@
-package org.ulpgc.dacd.feeder;
+package org.ulpgc.dacd;
 
 import com.google.gson.*;
-import org.ulpgc.dacd.model.Odd;
 
 import java.util.List;
 import java.util.stream.StreamSupport;
