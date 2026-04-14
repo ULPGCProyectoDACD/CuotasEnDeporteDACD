@@ -1,11 +1,12 @@
-package org.ulpgc.dacd;
+package org.ulpgc.dacd.feeder;
 
 import com.google.gson.*;
+import org.ulpgc.dacd.model.Odd;
 
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-public class OddsNormalize {
+public class OddsParser {
 
     public static List<Odd> parseOdds(String rawJson) {
         return toStream(JsonParser.parseString(rawJson).getAsJsonArray())
@@ -73,9 +74,7 @@ public class OddsNormalize {
         return StreamSupport.stream(array.spliterator(), false);
     }
 
-    private record MatchContext(String id, String sportKey, String homeTeam, String awayTeam, String commenceTime) {
-    }
+    private record MatchContext(String id, String sportKey, String homeTeam, String awayTeam, String commenceTime) {}
 
-    private record BookmakerContext(String key, String title, String lastUpdate) {
-    }
+    private record BookmakerContext(String key, String title, String lastUpdate) {}
 }
