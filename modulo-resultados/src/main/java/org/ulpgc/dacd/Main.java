@@ -16,7 +16,7 @@ public class Main {
         String apiKey = args[0];
         String dbUrl = "jdbc:sqlite:data/cuotas_deporte.db";
 
-        MatchFeeder feeder = new FootballDataOrgFeeder(apiKey, new MatchParser());
+        MatchFeeder feeder = new FootballDataOrgFeeder(apiKey);
         MatchStore store = new SqliteMatchStore(dbUrl);
         MatchController controller = new MatchController(feeder, store);
 
