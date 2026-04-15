@@ -24,6 +24,6 @@ public class Main {
         System.out.println("El programa se ejecutará ahora mismo y se repetirá cada 6 horas.");
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(controller::execute, 0, 6, TimeUnit.HOURS);
+        scheduler.scheduleAtFixedRate(controller::execute, 0, 1, TimeUnit.DAYS);
     }
 }
