@@ -5,8 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +17,7 @@ public class MatchParser {
         JsonObject rootObject = JsonParser.parseString(jsonString).getAsJsonObject();
         JsonArray matchesArray = rootObject.getAsJsonArray("matches");
 
-        LocalDateTime capturedAt = LocalDateTime.now();
+        Instant capturedAt = Instant.now();
 
         if (matchesArray == null) return matches;
 
@@ -30,11 +29,11 @@ public class MatchParser {
         return matches;
     }
 
-    private Match parseMatch(JsonObject matchJson, LocalDateTime capturedAt) {
+    private Match parseMatch(JsonObject matchJson, Instant capturedAt) {
         int id = matchJson.get("id").getAsInt();
 
         String utcDateStr = matchJson.get("utcDate").getAsString();
-        LocalDateTime date = LocalDateTime.parse(utcDateStr, DateTimeFormatter.ISO_DATE_TIME);
+        Instant date = Instant.parse(utcDateStr);
 
         String status = matchJson.get("status").getAsString();
 
