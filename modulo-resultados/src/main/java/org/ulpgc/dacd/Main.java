@@ -1,5 +1,9 @@
 package org.ulpgc.dacd;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class Main {
     public static void main(String[] args) {
 
@@ -12,8 +16,10 @@ public class Main {
 
         MatchFeeder feeder = new FootballDataOrgFeeder(apiKey, new MatchParser());
         MatchStore store = new SqliteMatchStore(dbUrl);
-
         MatchController controller = new MatchController(feeder, store);
-        controller.execute();
+
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(controller::execute, 0, 6, TimeUnit.HOURS);
+
     }
 }

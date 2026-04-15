@@ -19,16 +19,18 @@ public class SqliteMatchStore implements MatchStore {
     private void initDatabase() {
         String sql = """
                 CREATE TABLE IF NOT EXISTS matches (
-                    id INTEGER,
+                    id INTEGER PRIMARY KEY,
+                    home_team_id INTEGER,
                     home_team TEXT,
+                    away_team_id INTEGER,
                     away_team TEXT,
                     home_goals INTEGER,
                     away_goals INTEGER,
                     date TEXT,
                     status TEXT,
+                    referee_id INTEGER,
                     referee TEXT,
-                    captured_at TEXT,
-                    PRIMARY KEY (id, captured_at)
+                    captured_at TEXT
                 );
                 """;
 
@@ -42,29 +44,37 @@ public class SqliteMatchStore implements MatchStore {
 
     @Override
     public void save(List<Match> matches) {
-        String sql = "INSERT OR IGNORE INTO matches (id, home_team, away_team, home_goals, away_goals, date, status, referee, captured_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT OR IGNORE INTO matches (id, home_team_id, home_team, away_team_id, away_team, home_goals, away_goals, date, status, referee_id, referee, captured_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(dbPath);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             for (Match match : matches) {
                 pstmt.setInt(1, match.getId());
-                pstmt.setString(2, match.getHomeTeam().getName());
-                pstmt.setString(3, match.getAwayTeam().getName());
-                pstmt.setInt(4, match.getHomeGoals());
-                pstmt.setInt(5, match.getAwayGoals());
-                pstmt.setString(6, match.getDate().toString());
-                pstmt.setString(7, match.getStatus());
+                pstmt.setInt(2, match.getHomeTeam().getId());
+                pstmt.setString(3, match.getHomeTeam().getName());
+                pstmt.setInt(4, match.getAwayTeam().getId());
+                pstmt.setString(5, match.getAwayTeam().getName());
+                pstmt.setInt(6, match.getHomeGoals());
+                pstmt.setInt(7, match.getAwayGoals());
+                pstmt.setString(8, match.getDate().toString());
+                pstmt.setString(9, match.getStatus());
 
-                String refereeName = (match.getReferee() != null) ? match.getReferee().getName() : "Sin asignar";
-                pstmt.setString(8, refereeName);
-                pstmt.setString(9, match.getCapturedAt().toString());
+                if (match.getReferee() != null) {
+                    pstmt.setInt(10, match.getReferee().getId());
+                    pstmt.setString(11, match.getReferee().getName());
+                } else {
+                    pstmt.setNull(10, java.sql.Types.INTEGER);
+                    pstmt.setString(11, "Sin asignar");
+                }
+
+                pstmt.setString(12, match.getCapturedAt().toString());
 
                 pstmt.addBatch();
             }
 
             pstmt.executeBatch();
-            System.out.println("✅ Se han guardado " + matches.size() + " partidos en la base de datos.");
+            System.out.println("✅ Proceso de guardado en SQLite finalizado. (Los partidos repetidos han sido ignorados).");
 
         } catch (SQLException e) {
             System.err.println("Error al guardar los partidos: " + e.getMessage());
