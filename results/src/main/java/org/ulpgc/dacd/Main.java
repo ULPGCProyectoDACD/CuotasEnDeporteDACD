@@ -1,10 +1,10 @@
 package org.ulpgc.dacd;
 
-import org.ulpgc.dacd.control.FootballDataOrgFeeder;
+import org.ulpgc.dacd.control.feeder.FootballDataOrgFeeder;
 import org.ulpgc.dacd.control.MatchController;
-import org.ulpgc.dacd.control.MatchFeeder;
-import org.ulpgc.dacd.control.MatchStore;
-import org.ulpgc.dacd.control.SqliteMatchStore;
+import org.ulpgc.dacd.control.feeder.MatchFeeder;
+import org.ulpgc.dacd.control.persistence.MatchStore;
+import org.ulpgc.dacd.control.persistence.SqliteMatchStore;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

@@ -1,4 +1,4 @@
-package org.ulpgc.dacd.control;
+package org.ulpgc.dacd.control.feeder;
 
 import org.ulpgc.dacd.model.Match;
 import org.ulpgc.dacd.model.Team;
