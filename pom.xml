@@ -18,7 +18,7 @@
 
     <modules>
         <module>modulo-cuotas</module>
-        <module>modulo-resultados</module>
+        <module>results</module>
     </modules>
 
 </project>
