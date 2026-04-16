@@ -71,7 +71,9 @@ public class FootballDataOrgFeeder implements MatchFeeder {
 
         for (JsonElement element : matchesArray) {
             JsonObject matchJson = element.getAsJsonObject();
-            matches.add(parseMatch(matchJson, capturedAt));
+            if ("FINISHED".equals(matchJson.get("status").getAsString())) {
+                matches.add(parseMatch(matchJson, capturedAt));
+            }
         }
 
         return matches;
