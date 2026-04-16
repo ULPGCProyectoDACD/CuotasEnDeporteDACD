@@ -27,7 +27,7 @@ public class Main {
         MatchController controller = new MatchController(feeder, store);
 
         System.out.println("Iniciando servicio de captura de datos de Fútbol...");
-        System.out.println("El programa se ejecutará ahora mismo y se repetirá cada 6 horas.");
+        System.out.println("El programa se ejecutará ahora mismo y se repetirá cada 24 horas.");
 
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate(controller::execute, 0, 1, TimeUnit.DAYS);
