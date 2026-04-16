@@ -1,4 +1,4 @@
-package org.ulpgc.dacd;
+package org.ulpgc.dacd.model;
 
 public class Referee {
     private final int id;

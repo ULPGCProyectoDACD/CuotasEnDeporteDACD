@@ -1,5 +1,11 @@
 package org.ulpgc.dacd;
 
+import org.ulpgc.dacd.control.FootballDataOrgFeeder;
+import org.ulpgc.dacd.control.MatchController;
+import org.ulpgc.dacd.control.MatchFeeder;
+import org.ulpgc.dacd.control.MatchStore;
+import org.ulpgc.dacd.control.SqliteMatchStore;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;

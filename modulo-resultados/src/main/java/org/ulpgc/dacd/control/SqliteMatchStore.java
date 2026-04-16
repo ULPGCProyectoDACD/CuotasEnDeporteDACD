@@ -1,4 +1,6 @@
-package org.ulpgc.dacd;
+package org.ulpgc.dacd.control;
+
+import org.ulpgc.dacd.model.Match;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

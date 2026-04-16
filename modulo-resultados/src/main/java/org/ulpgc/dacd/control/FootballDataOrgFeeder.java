@@ -1,4 +1,8 @@
-package org.ulpgc.dacd;
+package org.ulpgc.dacd.control;
+
+import org.ulpgc.dacd.model.Match;
+import org.ulpgc.dacd.model.Team;
+import org.ulpgc.dacd.model.Referee;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

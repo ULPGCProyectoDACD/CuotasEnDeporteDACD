@@ -1,4 +1,4 @@
-package org.ulpgc.dacd;
+package org.ulpgc.dacd.model;
 
 public class Team {
     private final int id;
