@@ -52,25 +52,25 @@ public class SqliteMatchStore implements MatchStore {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             for (Match match : matches) {
-                pstmt.setInt(1, match.getId());
-                pstmt.setInt(2, match.getHomeTeam().getId());
-                pstmt.setString(3, match.getHomeTeam().getName());
-                pstmt.setInt(4, match.getAwayTeam().getId());
-                pstmt.setString(5, match.getAwayTeam().getName());
-                pstmt.setInt(6, match.getHomeGoals());
-                pstmt.setInt(7, match.getAwayGoals());
-                pstmt.setString(8, match.getDate().toString());
-                pstmt.setString(9, match.getStatus());
+                pstmt.setInt(1, match.id());
+                pstmt.setInt(2, match.homeTeam().id());
+                pstmt.setString(3, match.homeTeam().name());
+                pstmt.setInt(4, match.awayTeam().id());
+                pstmt.setString(5, match.awayTeam().name());
+                pstmt.setInt(6, match.homeGoals());
+                pstmt.setInt(7, match.awayGoals());
+                pstmt.setString(8, match.date().toString());
+                pstmt.setString(9, match.status());
 
-                if (match.getReferee() != null) {
-                    pstmt.setInt(10, match.getReferee().getId());
-                    pstmt.setString(11, match.getReferee().getName());
+                if (match.referee() != null) {
+                    pstmt.setInt(10, match.referee().id());
+                    pstmt.setString(11, match.referee().name());
                 } else {
                     pstmt.setNull(10, java.sql.Types.INTEGER);
                     pstmt.setString(11, "Sin asignar");
                 }
 
-                pstmt.setString(12, match.getCapturedAt().toString());
+                pstmt.setString(12, match.capturedAt().toString());
 
                 pstmt.addBatch();
             }
