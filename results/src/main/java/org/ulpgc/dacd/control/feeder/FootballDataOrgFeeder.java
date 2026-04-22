@@ -17,7 +17,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FootballDataOrgFeeder implements MatchFeeder {
+public class    FootballDataOrgFeeder implements MatchFeeder {
 
     private static final String API_URL = "https://api.football-data.org/v4/competitions/PD/matches";
     private final String apiKey;
