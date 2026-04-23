@@ -4,5 +4,5 @@ import org.ulpgc.dacd.model.Odd;
 import java.util.List;
 
 public interface OddsFeeder {
-    List<Odd> feed();
+    List<Odd> getOdds();
 }
