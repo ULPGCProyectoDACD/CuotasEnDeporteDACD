@@ -32,3 +32,6 @@ data/
 
 # Maven build output
 target/
+
+# VS Code
+.vscode/

@@ -14,15 +14,19 @@ import java.util.stream.Stream;
 
 public class OddsApiFeeder implements OddsFeeder {
 
-    private static final String ODDS_API_KEY = System.getenv("ODDS_API_KEY");
     private static final String LIGA = "soccer_spain_la_liga";
     private static final String REGIONS = "eu";
     private static final String MARKETS = "h2h,totals";
     private static final String ODDS_FORMAT = "decimal";
-    private static final String BASE_URL = String.format(
-            "https://api.the-odds-api.com/v4/sports/%s/odds/?apiKey=%s&regions=%s&markets=%s&oddsFormat=%s",
-            LIGA, ODDS_API_KEY, REGIONS, MARKETS, ODDS_FORMAT);
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
+
+    private final String baseUrl;
+
+    public OddsApiFeeder(String apiKey) {
+        this.baseUrl = String.format(
+                "https://api.the-odds-api.com/v4/sports/%s/odds/?apiKey=%s&regions=%s&markets=%s&oddsFormat=%s",
+                LIGA, apiKey, REGIONS, MARKETS, ODDS_FORMAT);
+    }
 
     @Override
     public List<Odd> getOdds() {
@@ -40,7 +44,7 @@ public class OddsApiFeeder implements OddsFeeder {
 
     private HttpRequest buildRequest() {
         return HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL))
+                .uri(URI.create(baseUrl))
                 .GET()
                 .build();
     }

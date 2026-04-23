@@ -9,10 +9,10 @@ import java.util.List;
 
 public class SqliteOddsStore implements OddsStore {
 
-    private static final String DB_PATH = "data/cuotas_deporte.db";
-    private static final String CONNECTION_URL = "jdbc:sqlite:" + DB_PATH;
+    private final String dbPath;
 
-    public SqliteOddsStore() {
+    public SqliteOddsStore(String dbPath) {
+        this.dbPath = dbPath;
         createDataDirectory();
         initDatabase();
     }
@@ -141,7 +141,7 @@ public class SqliteOddsStore implements OddsStore {
     }
 
     private Connection connect() throws SQLException {
-        return DriverManager.getConnection(CONNECTION_URL);
+        return DriverManager.getConnection(dbPath);
     }
 
     private void configurePragmas(Connection connection) throws SQLException {
