@@ -17,7 +17,7 @@
     </properties>
 
     <modules>
-        <module>modulo-cuotas</module>
+        <module>odds</module>
         <module>results</module>
     </modules>
 

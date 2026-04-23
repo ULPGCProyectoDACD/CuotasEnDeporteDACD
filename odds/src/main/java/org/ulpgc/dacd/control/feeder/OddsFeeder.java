@@ -1,4 +1,6 @@
-package org.ulpgc.dacd;
+package org.ulpgc.dacd.control.feeder;
+import org.ulpgc.dacd.model.Odd;
+
 import java.util.List;
 
 public interface OddsFeeder {

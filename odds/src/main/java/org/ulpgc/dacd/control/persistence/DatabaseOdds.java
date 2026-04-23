@@ -1,5 +1,8 @@
-package org.ulpgc.dacd;
+package org.ulpgc.dacd.control.persistence;
 
+
+import org.ulpgc.dacd.control.OddsSerializer;
+import org.ulpgc.dacd.model.Odd;
 
 import java.io.File;
 import java.sql.*;

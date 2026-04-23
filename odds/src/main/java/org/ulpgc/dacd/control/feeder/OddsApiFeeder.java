@@ -1,4 +1,7 @@
-package org.ulpgc.dacd;
+package org.ulpgc.dacd.control.feeder;
+
+import org.ulpgc.dacd.control.OddsParser;
+import org.ulpgc.dacd.model.Odd;
 
 import java.io.IOException;
 import java.net.URI;

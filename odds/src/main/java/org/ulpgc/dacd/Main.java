@@ -1,5 +1,10 @@
 package org.ulpgc.dacd;
 
+import org.ulpgc.dacd.control.*;
+import org.ulpgc.dacd.control.feeder.OddsApiFeeder;
+import org.ulpgc.dacd.control.feeder.OddsFeeder;
+import org.ulpgc.dacd.control.persistence.DatabaseOdds;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
