@@ -6,6 +6,8 @@ import java.io.File;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import org.ulpgc.dacd.model.MatchContext;
+import org.ulpgc.dacd.model.BookmakerContext;
 
 public class SqliteOddsStore implements OddsStore {
 
@@ -59,13 +61,13 @@ public class SqliteOddsStore implements OddsStore {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             for (Odd odd : odds) {
-                pstmt.setString(1, odd.matchId());
-                pstmt.setString(2, odd.sportKey());
-                pstmt.setString(3, odd.homeTeam());
-                pstmt.setString(4, odd.awayTeam());
-                pstmt.setString(5, odd.commenceTime());
-                pstmt.setString(6, odd.bookmakerKey());
-                pstmt.setString(7, odd.bookmakerTitle());
+                pstmt.setString(1, odd.match().id());
+                pstmt.setString(2, odd.match().sportKey());
+                pstmt.setString(3, odd.match().homeTeam());
+                pstmt.setString(4, odd.match().awayTeam());
+                pstmt.setString(5, odd.match().commenceTime());
+                pstmt.setString(6, odd.bookmaker().key());
+                pstmt.setString(7, odd.bookmaker().title());
                 pstmt.setString(8, odd.marketKey());
                 pstmt.setString(9, odd.outcomeName());
                 pstmt.setDouble(10, odd.price());
@@ -74,7 +76,7 @@ public class SqliteOddsStore implements OddsStore {
                 } else {
                     pstmt.setNull(11, Types.REAL);
                 }
-                pstmt.setString(12, odd.lastUpdate());
+                pstmt.setString(12, odd.bookmaker().lastUpdate());
 
                 pstmt.addBatch();
             }
@@ -125,19 +127,24 @@ public class SqliteOddsStore implements OddsStore {
 
     private Odd mapResultSetToOdd(ResultSet rs) throws SQLException {
         Double point = rs.getObject("point") != null ? rs.getDouble("point") : null;
-        return new Odd(
+        MatchContext match = new MatchContext(
                 rs.getString("match_id"),
                 rs.getString("sport_key"),
                 rs.getString("home_team"),
                 rs.getString("away_team"),
-                rs.getString("commence_time"),
+                rs.getString("commence_time")
+        );
+        BookmakerContext bookmaker = new BookmakerContext(
                 rs.getString("bookmaker_key"),
                 rs.getString("bookmaker_title"),
+                rs.getString("last_update")
+        );
+        return new Odd(match, bookmaker,
                 rs.getString("market_key"),
                 rs.getString("outcome_name"),
                 rs.getDouble("price"),
-                point,
-                rs.getString("last_update"));
+                point
+        );
     }
 
     private Connection connect() throws SQLException {

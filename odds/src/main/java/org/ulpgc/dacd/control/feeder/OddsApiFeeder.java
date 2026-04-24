@@ -1,7 +1,9 @@
 package org.ulpgc.dacd.control.feeder;
 
 import com.google.gson.*;
+import org.ulpgc.dacd.model.MatchContext;
 import org.ulpgc.dacd.model.Odd;
+import org.ulpgc.dacd.model.BookmakerContext;
 
 import java.io.IOException;
 import java.net.URI;
@@ -67,30 +69,32 @@ public class OddsApiFeeder implements OddsFeeder {
     }
 
     private List<Odd> extractOddsFromBookmaker(MatchContext matchContext, JsonObject bookmaker) {
-        BookmakerContext bookmakerContext = parseBookmakerContext(bookmaker);
+        BookmakerContext bookmarker = parseBookmakerContext(bookmaker);
         return toStream(bookmaker.getAsJsonArray("markets"))
                 .map(JsonElement::getAsJsonObject)
-                .flatMap(market -> extractOddsFromMarket(matchContext, bookmakerContext, market).stream())
+                .flatMap(market -> extractOddsFromMarket(matchContext, bookmarker, market).stream())
                 .toList();
     }
 
-    private List<Odd> extractOddsFromMarket(MatchContext matchContext, BookmakerContext bookmakerContext,
+    private List<Odd> extractOddsFromMarket(MatchContext matchContext, BookmakerContext bookmarker,
             JsonObject market) {
         String marketKey = market.get("key").getAsString();
         return toStream(market.getAsJsonArray("outcomes"))
                 .map(JsonElement::getAsJsonObject)
-                .map(outcome -> buildOdd(matchContext, bookmakerContext, marketKey, outcome))
+                .map(outcome -> buildOdd(matchContext, bookmarker, marketKey, outcome))
                 .toList();
     }
 
-    private Odd buildOdd(MatchContext match, BookmakerContext bookmaker, String marketKey, JsonObject outcome) {
+    private Odd buildOdd(MatchContext match, BookmakerContext bookmaker,
+                         String marketKey, JsonObject outcome) {
         return new Odd(
-                match.id(), match.sportKey(), match.homeTeam(), match.awayTeam(), match.commenceTime(),
-                bookmaker.key(), bookmaker.title(), marketKey,
+                match,
+                bookmaker,
+                marketKey,
                 outcome.get("name").getAsString(),
                 outcome.get("price").getAsDouble(),
-                parseNullableDouble(outcome, "point"),
-                bookmaker.lastUpdate());
+                parseNullableDouble(outcome, "point")
+        );
     }
 
     private MatchContext parseMatchContext(JsonObject match) {
@@ -116,8 +120,4 @@ public class OddsApiFeeder implements OddsFeeder {
     private Stream<JsonElement> toStream(JsonArray array) {
         return StreamSupport.stream(array.spliterator(), false);
     }
-
-    private record MatchContext(String id, String sportKey, String homeTeam, String awayTeam, String commenceTime) {}
-
-    private record BookmakerContext(String key, String title, String lastUpdate) {}
 }
