@@ -1,17 +1,17 @@
 package org.ulpgc.dacd;
 
-import org.ulpgc.dacd.control.feeder.FootballDataOrgFeeder;
+import jakarta.jms.JMSException;
+import org.ulpgc.dacd.control.EventPublisher;
 import org.ulpgc.dacd.control.MatchController;
+import org.ulpgc.dacd.control.feeder.FootballDataOrgFeeder;
 import org.ulpgc.dacd.control.feeder.MatchFeeder;
-import org.ulpgc.dacd.control.persistence.MatchStore;
-import org.ulpgc.dacd.control.persistence.SqliteMatchStore;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws JMSException {
 
         if (args.length == 0) {
             System.err.println("ERROR: No se ha proporcionado la API Key.");
@@ -20,11 +20,10 @@ public class Main {
         }
 
         String apiKey = args[0];
-        String dbUrl = "jdbc:sqlite:data/cuotas_deporte.db";
 
         MatchFeeder feeder = new FootballDataOrgFeeder(apiKey);
-        MatchStore store = new SqliteMatchStore(dbUrl);
-        MatchController controller = new MatchController(feeder, store);
+        EventPublisher publisher = new EventPublisher("tcp://localhost:61616");
+        MatchController controller = new MatchController(feeder, publisher);
 
         System.out.println("Iniciando servicio de captura de datos de Fútbol...");
         System.out.println("El programa se ejecutará ahora mismo y se repetirá cada 24 horas.");
