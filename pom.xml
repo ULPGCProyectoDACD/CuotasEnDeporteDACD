@@ -19,6 +19,7 @@
     <modules>
         <module>odds</module>
         <module>results</module>
+        <module>event-store-builder</module>
     </modules>
 
 </project>
