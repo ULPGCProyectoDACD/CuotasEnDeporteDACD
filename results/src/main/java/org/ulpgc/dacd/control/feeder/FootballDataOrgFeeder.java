@@ -17,7 +17,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class    FootballDataOrgFeeder implements MatchFeeder {
+public class FootballDataOrgFeeder implements MatchFeeder {
 
     private static final String API_URL = "https://api.football-data.org/v4/competitions/PD/matches";
     private final String apiKey;
@@ -83,7 +83,7 @@ public class    FootballDataOrgFeeder implements MatchFeeder {
         int id = matchJson.get("id").getAsInt();
 
         String utcDateStr = matchJson.get("utcDate").getAsString();
-        Instant date = Instant.parse(utcDateStr);
+        Instant dateInstant = Instant.parse(utcDateStr);
 
         String status = matchJson.get("status").getAsString();
 
@@ -93,12 +93,23 @@ public class    FootballDataOrgFeeder implements MatchFeeder {
         JsonObject scoreJson = matchJson.getAsJsonObject("score");
         JsonObject fullTimeJson = scoreJson.getAsJsonObject("fullTime");
 
-        int homeGoals = fullTimeJson.get("home").isJsonNull() ? 0 : fullTimeJson.get("home").getAsInt();
-        int awayGoals = fullTimeJson.get("away").isJsonNull() ? 0 : fullTimeJson.get("away").getAsInt();
+        Integer homeGoals = fullTimeJson.get("home").isJsonNull() ? null : fullTimeJson.get("home").getAsInt();
+        Integer awayGoals = fullTimeJson.get("away").isJsonNull() ? null : fullTimeJson.get("away").getAsInt();
 
         Referee referee = parseReferee(matchJson.getAsJsonArray("referees"));
 
-        return new Match(id, homeTeam, awayTeam, homeGoals, awayGoals, date, status, referee, capturedAt);
+        return new Match(
+                capturedAt.toString(),
+                "feeder-results",
+                id,
+                homeTeam,
+                awayTeam,
+                homeGoals,
+                awayGoals,
+                dateInstant.toString(),
+                status,
+                referee
+        );
     }
 
     private Team parseTeam(JsonObject teamJson) {
