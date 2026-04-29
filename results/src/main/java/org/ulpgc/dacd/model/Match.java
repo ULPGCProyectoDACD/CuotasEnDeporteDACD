@@ -8,7 +8,7 @@ public record Match(
         Team awayTeam,
         Integer homeGoals,
         Integer awayGoals,
-        String date,        // <-- Cambiado a String para que Gson lo ponga bonito
+        String date,
         String status,
         Referee referee
 ) {
