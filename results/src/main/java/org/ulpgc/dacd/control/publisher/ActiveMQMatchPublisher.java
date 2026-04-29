@@ -1,15 +1,15 @@
-package org.ulpgc.dacd.control;
+package org.ulpgc.dacd.control.publisher;
 
 import jakarta.jms.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
-public class EventPublisher implements AutoCloseable {
+public class ActiveMQMatchPublisher implements AutoCloseable, MatchPublisher {
 
     private final Connection connection;
     private final Session session;
     private final MessageProducer producer;
 
-    public EventPublisher(String brokerUrl) throws JMSException {
+    public ActiveMQMatchPublisher(String brokerUrl) throws JMSException {
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
         this.connection = factory.createConnection();
         this.connection.start();

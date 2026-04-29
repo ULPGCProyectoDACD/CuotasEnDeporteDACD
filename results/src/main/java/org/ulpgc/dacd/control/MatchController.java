@@ -3,6 +3,7 @@ package org.ulpgc.dacd.control;
 import com.google.gson.Gson;
 import jakarta.jms.JMSException;
 import org.ulpgc.dacd.control.feeder.MatchFeeder;
+import org.ulpgc.dacd.control.publisher.MatchPublisher;
 import org.ulpgc.dacd.model.Match;
 
 import java.util.List;
@@ -10,12 +11,11 @@ import java.util.List;
 public class MatchController {
 
     private static final String TOPIC = "FootballResult";
-
     private final MatchFeeder feeder;
-    private final EventPublisher publisher;
+    private final MatchPublisher publisher;
     private final Gson gson = new Gson();
 
-    public MatchController(MatchFeeder feeder, EventPublisher publisher) {
+    public MatchController(MatchFeeder feeder, MatchPublisher publisher) {
         this.feeder = feeder;
         this.publisher = publisher;
     }
