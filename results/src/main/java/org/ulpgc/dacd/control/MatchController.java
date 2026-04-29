@@ -43,16 +43,22 @@ public class MatchController {
     }
 
     private static MatchEvent buildMatchEvent(Match match) {
+        Integer refId = (match.referee() != null) ? match.referee().id() : null;
+        String refName = (match.referee() != null) ? match.referee().name() : "Sin asignar";
         return new MatchEvent(
                 match.capturedAt().toString(),
                 "feeder-results",
                 match.id(),
                 match.status(),
+                match.homeTeam().id(),
                 match.homeTeam().name(),
+                match.awayTeam().id(),
                 match.awayTeam().name(),
                 match.homeGoals(),
                 match.awayGoals(),
-                match.date().toString()
+                match.date().toString(),
+                refId,
+                refName
         );
     }
 }

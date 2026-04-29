@@ -20,7 +20,7 @@ public class EventPublisher implements AutoCloseable {
     public void publish(String topicName, String json)
             throws JMSException {
         Topic topic = session.createTopic(topicName);
-        MessageProducer producer = session.createProducer(topic);
+        MessageProducer producer = session.createProducer(topic); // Deberíamos crear un solo "cartero" para todos los mensajes
         producer.send(session.createTextMessage(json));
     }
 

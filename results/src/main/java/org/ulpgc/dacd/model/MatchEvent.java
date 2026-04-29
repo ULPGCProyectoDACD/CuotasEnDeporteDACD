@@ -5,9 +5,13 @@ public record MatchEvent(
         String ss,
         int matchId,
         String status,
+        int homeTeamId,
         String homeTeam,
+        int awayTeamId,
         String awayTeam,
         Integer homeGoals,
         Integer awayGoals,
-        String date
+        String date,
+        Integer refereeId,
+        String refereeName
 ) {}
