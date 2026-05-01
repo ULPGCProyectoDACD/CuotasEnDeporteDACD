@@ -3,7 +3,7 @@ package org.ulpgc.dacd.control.publisher;
 import jakarta.jms.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
-public class ActiveMQMatchPublisher implements AutoCloseable, MatchPublisher {
+public class ActiveMQMatchPublisher implements MatchPublisher {
 
     private final Connection connection;
     private final Session session;
@@ -17,6 +17,7 @@ public class ActiveMQMatchPublisher implements AutoCloseable, MatchPublisher {
         this.producer = session.createProducer(null);
     }
 
+    @Override
     public void publish(String topicName, String json) throws JMSException {
         Topic topic = session.createTopic(topicName);
         TextMessage message = session.createTextMessage(json);

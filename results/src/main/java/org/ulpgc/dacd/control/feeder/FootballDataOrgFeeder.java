@@ -20,6 +20,7 @@ import java.util.List;
 public class FootballDataOrgFeeder implements MatchFeeder {
 
     private static final String API_URL = "https://api.football-data.org/v4/competitions/PD/matches";
+    private static final HttpClient CLIENT = HttpClient.newHttpClient();
     private final String apiKey;
 
     public FootballDataOrgFeeder(String apiKey) {
@@ -28,40 +29,33 @@ public class FootballDataOrgFeeder implements MatchFeeder {
 
     @Override
     public List<Match> getMatches() {
-        String jsonResponse = readMatches();
-
-        if (jsonResponse == null || jsonResponse.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        return parseMatches(jsonResponse);
-    }
-
-    private String readMatches() {
-        try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL))
-                    .header("X-Auth-Token", apiKey)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
+        try {
+            HttpResponse<String> response = fetchResponse();
             if (response.statusCode() == 200) {
-                return response.body();
+                return parseMatches(response.body());
             } else {
-                System.err.println("Error en la API. Código HTTP: " + response.statusCode());
-                return null;
+                System.err.println("[FootballDataOrgFeeder] Error en la API. Código HTTP: " + response.statusCode());
             }
         } catch (Exception e) {
-            System.err.println("Error de conexión a Internet: " + e.getMessage());
-            return null;
+            System.err.println("[FootballDataOrgFeeder] Error de conexión a Internet: " + e.getMessage());
         }
+        return new ArrayList<>();
+    }
+
+    private HttpResponse<String> fetchResponse() throws Exception {
+        return CLIENT.send(buildRequest(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpRequest buildRequest() {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(API_URL))
+                .header("X-Auth-Token", apiKey)
+                .GET()
+                .build();
     }
 
     private List<Match> parseMatches(String jsonString) {
         List<Match> matches = new ArrayList<>();
-
         JsonObject rootObject = JsonParser.parseString(jsonString).getAsJsonObject();
         JsonArray matchesArray = rootObject.getAsJsonArray("matches");
 
@@ -75,16 +69,13 @@ public class FootballDataOrgFeeder implements MatchFeeder {
                 matches.add(parseMatch(matchJson, capturedAt));
             }
         }
-
         return matches;
     }
 
     private Match parseMatch(JsonObject matchJson, Instant capturedAt) {
         int id = matchJson.get("id").getAsInt();
-
         String utcDateStr = matchJson.get("utcDate").getAsString();
         Instant dateInstant = Instant.parse(utcDateStr);
-
         String status = matchJson.get("status").getAsString();
 
         Team homeTeam = parseTeam(matchJson.getAsJsonObject("homeTeam"));
@@ -116,7 +107,6 @@ public class FootballDataOrgFeeder implements MatchFeeder {
         int id = teamJson.get("id").getAsInt();
         String name = teamJson.get("name").getAsString();
         String shortName = teamJson.get("shortName").isJsonNull() ? name : teamJson.get("shortName").getAsString();
-
         return new Team(id, name, shortName);
     }
 
@@ -124,11 +114,7 @@ public class FootballDataOrgFeeder implements MatchFeeder {
         if (refereesArray == null || refereesArray.isEmpty()) {
             return null;
         }
-
         JsonObject refJson = refereesArray.get(0).getAsJsonObject();
-        int id = refJson.get("id").getAsInt();
-        String name = refJson.get("name").getAsString();
-
-        return new Referee(id, name);
+        return new Referee(refJson.get("id").getAsInt(), refJson.get("name").getAsString());
     }
 }
