@@ -3,20 +3,19 @@ package org.ulpgc.dacd.control;
 import com.google.gson.Gson;
 import jakarta.jms.JMSException;
 import org.ulpgc.dacd.control.feeder.MatchFeeder;
+import org.ulpgc.dacd.control.publisher.MatchPublisher;
 import org.ulpgc.dacd.model.Match;
-import org.ulpgc.dacd.model.MatchEvent;
 
 import java.util.List;
 
 public class MatchController {
 
     private static final String TOPIC = "FootballResult";
-
     private final MatchFeeder feeder;
-    private final EventPublisher publisher;
+    private final MatchPublisher publisher;
     private final Gson gson = new Gson();
 
-    public MatchController(MatchFeeder feeder, EventPublisher publisher) {
+    public MatchController(MatchFeeder feeder, MatchPublisher publisher) {
         this.feeder = feeder;
         this.publisher = publisher;
     }
@@ -32,33 +31,11 @@ public class MatchController {
         }
 
         for (Match match : matches) {
-            MatchEvent event = buildMatchEvent(match);
             try {
-                publisher.publish(TOPIC, gson.toJson(event));
+                publisher.publish(TOPIC, gson.toJson(match));
             } catch (JMSException e) {
-                System.err.println("[MatchController] Error publicando evento: "
-                        + e.getMessage());
+                System.err.println("[MatchController] Error publicando evento: " + e.getMessage());
             }
         }
-    }
-
-    private static MatchEvent buildMatchEvent(Match match) {
-        Integer refId = (match.referee() != null) ? match.referee().id() : null;
-        String refName = (match.referee() != null) ? match.referee().name() : "Sin asignar";
-        return new MatchEvent(
-                match.capturedAt().toString(),
-                "feeder-results",
-                match.id(),
-                match.status(),
-                match.homeTeam().id(),
-                match.homeTeam().name(),
-                match.awayTeam().id(),
-                match.awayTeam().name(),
-                match.homeGoals(),
-                match.awayGoals(),
-                match.date().toString(),
-                refId,
-                refName
-        );
     }
 }
