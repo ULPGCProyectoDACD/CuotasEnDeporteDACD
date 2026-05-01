@@ -1,7 +1,8 @@
 package org.ulpgc.dacd;
 
 import jakarta.jms.JMSException;
-import org.ulpgc.dacd.control.EventPublisher;
+import org.ulpgc.dacd.control.publisher.ActiveMQOddsPublisher;
+import org.ulpgc.dacd.control.publisher.OddsPublisher;
 import org.ulpgc.dacd.control.OddsController;
 import org.ulpgc.dacd.control.feeder.OddsApiFeeder;
 import org.ulpgc.dacd.control.feeder.OddsFeeder;
@@ -22,7 +23,7 @@ public class Main {
         String apiKey = args[0];
 
         OddsFeeder feeder = new OddsApiFeeder(apiKey);
-        EventPublisher publisher = new EventPublisher("tcp://localhost:61616");
+        OddsPublisher publisher = new ActiveMQOddsPublisher("tcp://localhost:61616");
         OddsController controller = new OddsController(feeder, publisher);
 
         System.out.println("Iniciando servicio de captura de datos de Cuotas...");

@@ -3,21 +3,19 @@ package org.ulpgc.dacd.control;
 import com.google.gson.Gson;
 import jakarta.jms.JMSException;
 import org.ulpgc.dacd.control.feeder.OddsFeeder;
+import org.ulpgc.dacd.control.publisher.OddsPublisher;
 import org.ulpgc.dacd.model.Odd;
-import org.ulpgc.dacd.model.OddsEvent;
 
-import java.time.Instant;
 import java.util.List;
 
 public class OddsController {
 
-    private static final String TOPIC = "Prediction";
-
+    private static final String TOPIC = "FootballOdd";
     private final OddsFeeder feeder;
-    private final EventPublisher publisher;
+    private final OddsPublisher publisher;
     private final Gson gson = new Gson();
 
-    public OddsController(OddsFeeder feeder, EventPublisher publisher) {
+    public OddsController(OddsFeeder feeder, OddsPublisher publisher) {
         this.feeder = feeder;
         this.publisher = publisher;
     }
@@ -33,24 +31,10 @@ public class OddsController {
         }
 
         for (Odd odd : odds) {
-            OddsEvent event = new OddsEvent(
-                    Instant.now().toString(),
-                    "feeder-odds",
-                    odd.match().id(),
-                    odd.match().sportKey(),
-                    odd.match().homeTeam(),
-                    odd.match().awayTeam(),
-                    odd.bookmaker().key(),
-                    odd.marketKey(),
-                    odd.outcomeName(),
-                    odd.price(),
-                    odd.point()
-            );;
             try {
-                publisher.publish(TOPIC, gson.toJson(event));
+                publisher.publish(TOPIC, gson.toJson(odd));
             } catch (JMSException e) {
-                System.err.println("[OddsController] Error publicando evento: "
-                        + e.getMessage());
+                System.err.println("[OddsController] Error publicando evento: " + e.getMessage());
             }
         }
     }

@@ -3,13 +3,13 @@ package org.ulpgc.dacd.control.publisher;
 import jakarta.jms.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
-public class ActiveMQMatchPublisher implements MatchPublisher {
+public class ActiveMQOddsPublisher implements OddsPublisher {
 
     private final Connection connection;
     private final Session session;
     private final MessageProducer producer;
 
-    public ActiveMQMatchPublisher(String brokerUrl) throws JMSException {
+    public ActiveMQOddsPublisher(String brokerUrl) throws JMSException {
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
         this.connection = factory.createConnection();
         this.connection.start();
