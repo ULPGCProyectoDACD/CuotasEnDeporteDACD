@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.StreamSupport;
 import java.util.stream.Stream;
@@ -21,7 +22,6 @@ public class OddsApiFeeder implements OddsFeeder {
     private static final String MARKETS = "h2h,totals";
     private static final String ODDS_FORMAT = "decimal";
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
-
     private final String baseUrl;
 
     public OddsApiFeeder(String apiKey) {
@@ -51,43 +51,45 @@ public class OddsApiFeeder implements OddsFeeder {
                 .build();
     }
 
-    // ── Lógica de parseo (antes en OddsParser) ──────────────────────────────
-
     private List<Odd> parseOdds(String rawJson) {
+        Instant capturedAt = Instant.now();
+
         return toStream(JsonParser.parseString(rawJson).getAsJsonArray())
                 .map(JsonElement::getAsJsonObject)
-                .flatMap(match -> extractOddsFromMatch(match).stream())
+                .flatMap(match -> extractOddsFromMatch(match, capturedAt).stream())
                 .toList();
     }
 
-    private List<Odd> extractOddsFromMatch(JsonObject match) {
+    private List<Odd> extractOddsFromMatch(JsonObject match, Instant capturedAt) {
         MatchContext matchContext = parseMatchContext(match);
         return toStream(match.getAsJsonArray("bookmakers"))
                 .map(JsonElement::getAsJsonObject)
-                .flatMap(bookmaker -> extractOddsFromBookmaker(matchContext, bookmaker).stream())
+                .flatMap(bookmaker -> extractOddsFromBookmaker(matchContext, bookmaker, capturedAt).stream())
                 .toList();
     }
 
-    private List<Odd> extractOddsFromBookmaker(MatchContext matchContext, JsonObject bookmaker) {
+    private List<Odd> extractOddsFromBookmaker(MatchContext matchContext, JsonObject bookmaker, Instant capturedAt) {
         BookmakerContext bookmarker = parseBookmakerContext(bookmaker);
         return toStream(bookmaker.getAsJsonArray("markets"))
                 .map(JsonElement::getAsJsonObject)
-                .flatMap(market -> extractOddsFromMarket(matchContext, bookmarker, market).stream())
+                .flatMap(market -> extractOddsFromMarket(matchContext, bookmarker, market, capturedAt).stream())
                 .toList();
     }
 
     private List<Odd> extractOddsFromMarket(MatchContext matchContext, BookmakerContext bookmarker,
-            JsonObject market) {
+                                            JsonObject market, Instant capturedAt) {
         String marketKey = market.get("key").getAsString();
         return toStream(market.getAsJsonArray("outcomes"))
                 .map(JsonElement::getAsJsonObject)
-                .map(outcome -> buildOdd(matchContext, bookmarker, marketKey, outcome))
+                .map(outcome -> buildOdd(matchContext, bookmarker, marketKey, outcome, capturedAt))
                 .toList();
     }
 
     private Odd buildOdd(MatchContext match, BookmakerContext bookmaker,
-                         String marketKey, JsonObject outcome) {
+                         String marketKey, JsonObject outcome, Instant capturedAt) {
         return new Odd(
+                capturedAt.toString(),
+                "feeder-odds",
                 match,
                 bookmaker,
                 marketKey,
@@ -98,19 +100,25 @@ public class OddsApiFeeder implements OddsFeeder {
     }
 
     private MatchContext parseMatchContext(JsonObject match) {
+        String commenceTimeStr = match.get("commence_time").getAsString();
+        Instant commenceTime = Instant.parse(commenceTimeStr);
+
         return new MatchContext(
                 match.get("id").getAsString(),
                 match.get("sport_key").getAsString(),
                 match.get("home_team").getAsString(),
                 match.get("away_team").getAsString(),
-                match.get("commence_time").getAsString());
+                commenceTime.toString());
     }
 
     private BookmakerContext parseBookmakerContext(JsonObject bookmaker) {
+        String lastUpdateStr = bookmaker.get("last_update").getAsString();
+        Instant lastUpdate = Instant.parse(lastUpdateStr);
+
         return new BookmakerContext(
                 bookmaker.get("key").getAsString(),
                 bookmaker.get("title").getAsString(),
-                bookmaker.get("last_update").getAsString());
+                lastUpdate.toString());
     }
 
     private Double parseNullableDouble(JsonObject obj, String field) {
