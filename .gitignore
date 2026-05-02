@@ -38,4 +38,6 @@ target/
 
 launch.json
 
+eventstore/
+
 *.mdj
