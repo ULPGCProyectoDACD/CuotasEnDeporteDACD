@@ -27,10 +27,11 @@ public class EventStoreWriter {
         Files.createDirectories(dir);
         Path file = dir.resolve(day + ".events");
 
-        Files.writeString(file, json + "\n",
+        Files.writeString(file, json + System.lineSeparator(),
                 StandardOpenOption.CREATE,
                 StandardOpenOption.APPEND);
 
-        System.out.println("[ESB] Guardado en: " + file);
+        System.out.println("[ESB] Evento guardado | Topic: " + topicName
+                + " | Fuente: " + ss + " | Fecha: " + day + " | Archivo: " + file);
     }
 }
