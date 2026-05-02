@@ -1,7 +1,7 @@
 package org.ulpgc.dacd.control;
 
-import jakarta.jms.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import javax.jms.*;
 
 public class ActiveMQSubscriber implements TopicSubscriber {
 

@@ -1,7 +1,8 @@
 package org.ulpgc.dacd.control.publisher;
 
-import jakarta.jms.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
+
+import javax.jms.*;
 
 public class ActiveMQOddsPublisher implements OddsPublisher {
 

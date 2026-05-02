@@ -1,6 +1,6 @@
 package org.ulpgc.dacd.control.publisher;
 
-import jakarta.jms.*;
+import javax.jms.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 public class ActiveMQMatchPublisher implements MatchPublisher {
