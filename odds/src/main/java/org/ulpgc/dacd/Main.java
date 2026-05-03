@@ -1,6 +1,6 @@
 package org.ulpgc.dacd;
 
-import jakarta.jms.JMSException;
+import javax.jms.JMSException;
 import org.ulpgc.dacd.control.publisher.ActiveMQOddsPublisher;
 import org.ulpgc.dacd.control.publisher.OddsPublisher;
 import org.ulpgc.dacd.control.OddsController;

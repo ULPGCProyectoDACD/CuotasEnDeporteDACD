@@ -1,6 +1,6 @@
 package org.ulpgc.dacd;
 
-import jakarta.jms.JMSException;
+import javax.jms.JMSException;
 import org.ulpgc.dacd.control.publisher.ActiveMQMatchPublisher;
 import org.ulpgc.dacd.control.publisher.MatchPublisher;
 import org.ulpgc.dacd.control.MatchController;

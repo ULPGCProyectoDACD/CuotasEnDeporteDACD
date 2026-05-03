@@ -1,7 +1,7 @@
 package org.ulpgc.dacd.control;
 
 import com.google.gson.Gson;
-import jakarta.jms.JMSException;
+import javax.jms.JMSException;
 import org.ulpgc.dacd.control.feeder.OddsFeeder;
 import org.ulpgc.dacd.control.publisher.OddsPublisher;
 import org.ulpgc.dacd.model.Odd;
