@@ -44,3 +44,7 @@ eventstore/
 
 # Archivo de estado de los feeders (Watermarks)
 results/last_match_date.txt
+
+# Ficheros temporales y generados del laboratorio de Python
+machine-learning/historical_dataset.csv
+machine-learning/match_model.onnx
