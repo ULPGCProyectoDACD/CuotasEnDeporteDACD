@@ -1,6 +1,8 @@
 package org.ulpgc.dacd;
 
 import javax.jms.JMSException;
+
+import org.ulpgc.dacd.control.WatermarkManager;
 import org.ulpgc.dacd.control.publisher.ActiveMQMatchPublisher;
 import org.ulpgc.dacd.control.publisher.MatchPublisher;
 import org.ulpgc.dacd.control.MatchController;
@@ -24,7 +26,8 @@ public class Main {
 
         MatchFeeder feeder = new FootballDataOrgFeeder(apiKey);
         MatchPublisher publisher = new ActiveMQMatchPublisher("tcp://localhost:61616");
-        MatchController controller = new MatchController(feeder, publisher);
+        WatermarkManager watermarkManager = new WatermarkManager("results/last_match_date.txt");
+        MatchController controller = new MatchController(feeder, publisher, watermarkManager);
 
         System.out.println("Iniciando servicio de captura de datos de Fútbol...");
         System.out.println("El programa se ejecutará ahora mismo y se repetirá cada 24 horas.");

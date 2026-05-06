@@ -22,8 +22,6 @@
             <artifactId>activemq-client</artifactId>
             <version>5.15.12</version>
         </dependency>
-
-        <!-- CAMBIO 2: Versión exacta de Gson solicitada por el profesor -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>

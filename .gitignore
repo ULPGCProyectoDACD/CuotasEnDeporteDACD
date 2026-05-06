@@ -41,3 +41,6 @@ launch.json
 eventstore/
 
 *.mdj
+
+# Archivo de estado de los feeders (Watermarks)
+results/last_match_date.txt
