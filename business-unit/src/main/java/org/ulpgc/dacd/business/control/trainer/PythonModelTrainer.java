@@ -1,4 +1,4 @@
-package org.ulpgc.dacd.business.control;
+package org.ulpgc.dacd.business.control.trainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,15 +6,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class PythonModelTrainer {
+public class PythonModelTrainer implements ModelTrainer {
     private final String mlDirectoryName;
     private final String scriptName;
-    private final String pythonExePath; // Se calcula automáticamente
+    private final String pythonExePath;
 
     public PythonModelTrainer(String mlDirectoryName, String scriptName) {
         this.mlDirectoryName = mlDirectoryName;
         this.scriptName = scriptName;
-        this.pythonExePath = determinePythonPath(); // Auto-detección del OS
+        this.pythonExePath = determinePythonPath();
     }
 
     private String determinePythonPath() {
@@ -28,9 +28,9 @@ public class PythonModelTrainer {
         }
     }
 
+    @Override
     public void trainModel() {
         System.out.println("Iniciando orquestación del entrenamiento en Python...");
-
         try {
             Path mlFolder = resolveWorkingDirectory();
             Path pythonExe = mlFolder.resolve(pythonExePath);
@@ -39,9 +39,7 @@ public class PythonModelTrainer {
                 System.err.println("❌ ERROR: No se encuentra el ejecutable de Python en: " + pythonExe.toAbsolutePath());
                 return;
             }
-
             executePythonScript(mlFolder, pythonExe);
-
         } catch (Exception e) {
             System.err.println("❌ Error crítico al intentar ejecutar Python: " + e.getMessage());
             e.printStackTrace();
@@ -58,11 +56,8 @@ public class PythonModelTrainer {
         ProcessBuilder processBuilder = new ProcessBuilder(pythonExe.toString(), scriptName)
                 .directory(workingDirectory.toFile())
                 .inheritIO();
-
         processBuilder.environment().put("PYTHONIOENCODING", "utf-8");
-
         int exitCode = processBuilder.start().waitFor();
-
         if (exitCode == 0) {
             System.out.println("✅ Entrenamiento completado. El modelo .onnx se ha actualizado.");
         } else {
