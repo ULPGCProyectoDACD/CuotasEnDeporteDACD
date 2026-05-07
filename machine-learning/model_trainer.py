@@ -8,8 +8,8 @@ def train_and_export_model(df, onnx_output_path):
     
     X = df[['Home_Streak_Points', 'Away_Streak_Points', 'Home_Goals', 'Away_Goals']]
     y = df['Match_Result']
-    
-    model = LogisticRegression(multi_class='multinomial', solver='lbfgs', max_iter=1000)
+
+    model = LogisticRegression(solver='lbfgs', max_iter=1000)
     model.fit(X, y)
     print("¡Modelo entrenado con éxito!")
     
