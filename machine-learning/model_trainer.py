@@ -6,7 +6,10 @@ import numpy as np
 def train_and_export_model(df, onnx_output_path):
     print("\n--- Iniciando Entrenamiento del Modelo ---")
     
-    X = df[['Home_Streak_Points', 'Away_Streak_Points', 'Home_Goals', 'Away_Goals']]
+    X = df[['Home_Streak_Points', 'Away_Streak_Points', 
+            'Home_Avg_Goals_For', 'Home_Avg_Goals_Against', 
+            'Away_Avg_Goals_For', 'Away_Avg_Goals_Against']]
+    
     y = df['Match_Result']
 
     model = LogisticRegression(solver='lbfgs', max_iter=1000)
