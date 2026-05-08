@@ -15,11 +15,15 @@ public class PredictionCache {
         return cache.get(matchKey);
     }
 
-    public void put(String matchKey, Map<Long, Double> probabilities) {
+    public void update(String matchKey, Map<Long, Double> probabilities) {
+        maintainCapacity();
+        cache.put(matchKey, probabilities);
+    }
+
+    private void maintainCapacity() {
         if (cache.size() >= MAX_SIZE) {
             System.out.println("🧹 [MANTENIMIENTO] Limpiando caché antiguo para liberar RAM...");
             cache.clear();
         }
-        cache.put(matchKey, probabilities);
     }
 }

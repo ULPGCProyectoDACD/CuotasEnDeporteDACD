@@ -36,7 +36,7 @@ public class PredictionService {
         };
 
         Map<Long, Double> probabilities = predictor.predictProbabilities(matchFeatures);
-        cache.put(matchKey, probabilities);
+        cache.update(matchKey, probabilities);
 
         return probabilities;
     }
