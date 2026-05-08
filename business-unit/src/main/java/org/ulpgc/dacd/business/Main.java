@@ -1,10 +1,11 @@
 package org.ulpgc.dacd.business;
 
+import org.ulpgc.dacd.business.control.stats.TeamStatsManager;
+import org.ulpgc.dacd.business.control.stats.EventStoreTeamStatsManager;
 import org.ulpgc.dacd.business.control.trainer.ModelTrainer;
 import org.ulpgc.dacd.business.control.trainer.PythonModelTrainer;
 import org.ulpgc.dacd.business.control.predictor.MatchPredictor;
 import org.ulpgc.dacd.business.control.predictor.OnnxMatchPredictor;
-import org.ulpgc.dacd.business.control.stats.TeamStatsManager;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,7 +25,7 @@ public class Main {
         trainer.trainModel();
 
         System.out.println("\n--- INICIANDO CARGA DE MEMORIA ---");
-        TeamStatsManager statsManager = new TeamStatsManager();
+        TeamStatsManager statsManager = new EventStoreTeamStatsManager();
         statsManager.loadStatsFromEventStore(eventStorePath);
 
         System.out.println("\n--- INICIANDO PRUEBA DEL PREDICTOR CON DATOS REALES ---");
@@ -79,7 +80,7 @@ public class Main {
         if (Files.exists(pathFromModule)) {
             return pathFromModule.toString();
         }
-        
+
         throw new IllegalStateException("❌ ERROR: No se ha podido localizar la carpeta 'eventstore'. Asegúrate de estar ejecutando el programa desde el directorio correcto.");
     }
 }
