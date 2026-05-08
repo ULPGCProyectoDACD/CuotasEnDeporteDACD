@@ -22,17 +22,20 @@ public class BusinessController {
             String commenceTime = odd.match().commenceTime();
 
             System.out.println("\n⚡ [NUEVA CUOTA RECIBIDA] " + odd.bookmaker().title() + " -> " + odd.outcomeName() + " a " + odd.price());
-
             Map<Long, Double> probabilities = predictionService.getOrCalculateProbabilities(homeTeam, awayTeam, commenceTime);
 
-            System.out.println("🧠 Probabilidades IA:");
-            for (Map.Entry<Long, Double> entry : probabilities.entrySet()) {
-                System.out.printf("  -> Clase %d: %.2f%%\n", entry.getKey(), entry.getValue() * 100);
-            }
-            System.out.println("--------------------------------------------------");
+            printPredictionResults(probabilities);
 
         } catch (Exception e) {
             System.err.println("❌ Error procesando el JSON de la cuota: " + e.getMessage());
         }
+    }
+
+    private void printPredictionResults(Map<Long, Double> probabilities) {
+        System.out.println("🧠 Probabilidades IA:");
+        for (Map.Entry<Long, Double> entry : probabilities.entrySet()) {
+            System.out.printf("  -> Clase %d: %.2f%%\n", entry.getKey(), entry.getValue() * 100);
+        }
+        System.out.println("--------------------------------------------------");
     }
 }
