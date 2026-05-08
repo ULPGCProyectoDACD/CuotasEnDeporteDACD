@@ -12,10 +12,8 @@ public class SqlitePredictionRepository implements PredictionRepository {
     private final String dbUrl;
 
     public SqlitePredictionRepository(String dbPath) {
-
         File file = new File(dbPath);
         File parentDir = file.getParentFile();
-
         if (parentDir != null && !parentDir.exists()) {
             if (parentDir.mkdirs()) {
                 System.out.println("📂 Carpeta creada: " + parentDir.getPath());
@@ -24,6 +22,7 @@ public class SqlitePredictionRepository implements PredictionRepository {
 
         this.dbUrl = "jdbc:sqlite:" + dbPath;
         initDatabase();
+        cleanOldPredictions();
     }
 
     private void initDatabase() {
@@ -102,4 +101,24 @@ public class SqlitePredictionRepository implements PredictionRepository {
 
         return (targetProbability * oddPrice) - 1;
     }
+
+    private void cleanOldPredictions() {
+        String deleteSQL = "DELETE FROM predictions WHERE datetime(match_date) < datetime('now', '-1 day')";
+
+        try (Connection conn = DriverManager.getConnection(dbUrl);
+             Statement stmt = conn.createStatement()) {
+
+            int deletedRows = stmt.executeUpdate(deleteSQL);
+
+            if (deletedRows > 0) {
+                System.out.println("🧹 [MANTENIMIENTO DB] Limpieza completada. Se eliminaron " + deletedRows + " predicciones de partidos caducados.");
+            } else {
+                System.out.println("✨ [MANTENIMIENTO DB] La base de datos está limpia. No hay partidos caducados.");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error limpiando la base de datos antigua: " + e.getMessage());
+        }
+    }
+
 }
