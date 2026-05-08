@@ -1,12 +1,12 @@
 package org.ulpgc.dacd.business.control.persistence;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
-import java.io.File;
 
 public class SqlitePredictionRepository implements PredictionRepository {
     private final String dbUrl;
@@ -16,7 +16,7 @@ public class SqlitePredictionRepository implements PredictionRepository {
         File parentDir = file.getParentFile();
         if (parentDir != null && !parentDir.exists()) {
             if (parentDir.mkdirs()) {
-                System.out.println("📂 Carpeta creada: " + parentDir.getPath());
+                System.out.println("📂 Carpeta de base de datos creada: " + parentDir.getPath());
             }
         }
 
@@ -47,7 +47,6 @@ public class SqlitePredictionRepository implements PredictionRepository {
         try (Connection conn = DriverManager.getConnection(dbUrl);
              Statement stmt = conn.createStatement()) {
             stmt.execute(createTableSQL);
-            System.out.println("💾 Base de datos inicializada correctamente.");
         } catch (SQLException e) {
             System.err.println("❌ Error creando la base de datos: " + e.getMessage());
         }
@@ -82,7 +81,6 @@ public class SqlitePredictionRepository implements PredictionRepository {
             pstmt.setDouble(11, index);
 
             pstmt.executeUpdate();
-
         } catch (SQLException e) {
             System.err.println("❌ Error guardando la predicción: " + e.getMessage());
         }
@@ -93,10 +91,14 @@ public class SqlitePredictionRepository implements PredictionRepository {
 
         if (outcome.equalsIgnoreCase("Draw") || outcome.equalsIgnoreCase("Empate")) {
             targetProbability = probDraw;
-        } else if (outcome.contains(homeTeam) || homeTeam.contains(outcome)) {
+        } else if (outcome.equals(homeTeam)) {
             targetProbability = probHome;
-        } else if (outcome.contains(awayTeam) || awayTeam.contains(outcome)) {
+        } else if (outcome.equals(awayTeam)) {
             targetProbability = probAway;
+        }
+
+        if (targetProbability == 0.0) {
+            return 0.0;
         }
 
         return (targetProbability * oddPrice) - 1;
@@ -110,13 +112,11 @@ public class SqlitePredictionRepository implements PredictionRepository {
              Statement stmt = conn.createStatement()) {
 
             int deletedRows = stmt.executeUpdate(deleteSQL);
-
             if (deletedRows > 0) {
-                System.out.println("🧹 [MANTENIMIENTO DB] Limpieza completada. Se eliminaron " + deletedRows + " predicciones de partidos caducados.");
+                System.out.println("🧹 [MANTENIMIENTO DB] Se eliminaron " + deletedRows + " predicciones caducadas.");
             } else {
-                System.out.println("✨ [MANTENIMIENTO DB] La base de datos está limpia. No hay partidos caducados.");
+                System.out.println("✨ [MANTENIMIENTO DB] La base de datos está limpia.");
             }
-
         } catch (SQLException e) {
             System.err.println("❌ Error limpiando la base de datos antigua: " + e.getMessage());
         }

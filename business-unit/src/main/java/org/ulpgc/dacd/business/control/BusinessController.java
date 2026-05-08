@@ -28,9 +28,14 @@ public class BusinessController {
             String awayTeam = TeamNameMapper.getOfficialName(odd.match().awayTeam());
             String commenceTime = odd.match().commenceTime();
 
-            System.out.println("\n⚡ [NUEVA CUOTA h2h RECIBIDA] " + odd.bookmaker().title() + " -> " + odd.outcomeName() + " a " + odd.price());
-            Map<Long, Double> probabilities = predictionService.getOrCalculateProbabilities(homeTeam, awayTeam, commenceTime);
+            String outcomeName = odd.outcomeName();
+            String mappedOutcome = (outcomeName.equalsIgnoreCase("Draw") || outcomeName.equalsIgnoreCase("Empate"))
+                    ? "Draw"
+                    : TeamNameMapper.getOfficialName(outcomeName);
 
+            System.out.println("\n⚡ [CUOTA h2h] " + odd.bookmaker().title() + " -> " + odd.outcomeName() + " a " + odd.price());
+
+            Map<Long, Double> probabilities = predictionService.getOrCalculateProbabilities(homeTeam, awayTeam, commenceTime);
             printPredictionResults(probabilities);
 
             repository.savePrediction(
@@ -39,7 +44,7 @@ public class BusinessController {
                     awayTeam,
                     odd.bookmaker().title(),
                     odd.marketKey(),
-                    odd.outcomeName(),
+                    mappedOutcome,
                     odd.price(),
                     probabilities
             );
