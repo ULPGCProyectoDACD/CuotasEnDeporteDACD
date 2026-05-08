@@ -21,23 +21,28 @@ public class PredictionService {
         if (cache.contains(matchKey)) {
             System.out.println("♻️ (Leído desde el Caché - Ahorro de CPU)");
             return cache.get(matchKey);
+        } else {
+            return calculateAndStoreProbabilities(homeTeam, awayTeam, matchKey);
         }
+    }
 
+    private Map<Long, Double> calculateAndStoreProbabilities(String homeTeam, String awayTeam, String matchKey) {
         System.out.println("⚙️ Calculando predicción con IA por primera vez...");
         System.out.println("⚽ Analizando: " + homeTeam + " vs " + awayTeam);
+        float[] matchFeatures = extractMatchFeatures(homeTeam, awayTeam);
+        Map<Long, Double> probabilities = predictor.predictProbabilities(matchFeatures);
+        cache.update(matchKey, probabilities);
+        return probabilities;
+    }
 
+    private float[] extractMatchFeatures(String homeTeam, String awayTeam) {
         float[] homeStats = statsManager.getTeamStats(homeTeam);
         float[] awayStats = statsManager.getTeamStats(awayTeam);
-
         float[] matchFeatures = new float[]{
                 homeStats[0], awayStats[0],
                 homeStats[1], homeStats[2],
                 awayStats[1], awayStats[2]
         };
-
-        Map<Long, Double> probabilities = predictor.predictProbabilities(matchFeatures);
-        cache.update(matchKey, probabilities);
-
-        return probabilities;
+        return matchFeatures;
     }
 }
