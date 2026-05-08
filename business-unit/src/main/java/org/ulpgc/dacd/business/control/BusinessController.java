@@ -27,8 +27,12 @@ public class BusinessController {
     public void processOddsMessage(String rawJson) {
         try {
             OddsEvent odd = gson.fromJson(rawJson, OddsEvent.class);
-            String homeTeam = odd.match().homeTeam();
-            String awayTeam = odd.match().awayTeam();
+
+            String rawHomeTeam = odd.match().homeTeam();
+            String rawAwayTeam = odd.match().awayTeam();
+
+            String homeTeam = TeamNameMapper.getOfficialName(rawHomeTeam);
+            String awayTeam = TeamNameMapper.getOfficialName(rawAwayTeam);
 
             System.out.println("\n⚡ [NUEVA CUOTA RECIBIDA] " + odd.bookmaker().title() + " -> " + odd.outcomeName() + " a " + odd.price());
             evaluateMatch(homeTeam, awayTeam);
