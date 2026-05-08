@@ -10,9 +10,12 @@ import org.ulpgc.dacd.business.control.stats.EventStoreTeamStatsManager;
 import org.ulpgc.dacd.business.control.stats.TeamStatsManager;
 import org.ulpgc.dacd.business.control.trainer.ModelTrainer;
 import org.ulpgc.dacd.business.control.trainer.PythonModelTrainer;
-// Nuevos imports para SQLite
 import org.ulpgc.dacd.business.control.persistence.PredictionRepository;
 import org.ulpgc.dacd.business.control.persistence.SqlitePredictionRepository;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class BusinessUnitApp {
     public void start() {
@@ -30,6 +33,8 @@ public class BusinessUnitApp {
             PredictionService predictionService = new PredictionService(statsManager, predictor);
             BusinessController controller = new BusinessController(predictionService, repository);
 
+            setupScheduledMaintenance(repository, trainer, statsManager);
+
             System.out.println("\n--- ARRANCANDO ESCUCHADOR DE CUOTAS ---");
             OddsReceiver receiver = new ActiveMQOddsReceiver("tcp://localhost:61616", "FootballOdd", controller::processOddsMessage);
             receiver.start();
@@ -37,5 +42,26 @@ public class BusinessUnitApp {
         } catch (Exception e) {
             System.err.println("❌ Error crítico al arrancar el sistema: " + e.getMessage());
         }
+    }
+
+    private void setupScheduledMaintenance(PredictionRepository repository, ModelTrainer trainer, TeamStatsManager statsManager) {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        Runnable maintenanceTask = () -> {
+            try {
+                System.out.println("\n🛠️ [MANTENIMIENTO PROGRAMADO] Iniciando tareas de actualización...");
+
+                repository.cleanOldPredictions();
+                trainer.trainModel();
+                statsManager.loadStatsFromEventStore(PathResolver.resolveEventStorePath());
+
+                System.out.println("✅ [MANTENIMIENTO PROGRAMADO] Actualización completada con éxito. Sistema al 100%.");
+            } catch (Exception e) {
+                System.err.println("❌ [ERROR MANTENIMIENTO] Falló la tarea programada: " + e.getMessage());
+            }
+        };
+
+        scheduler.scheduleAtFixedRate(maintenanceTask, 24, 24, TimeUnit.HOURS);
+        System.out.println("⏱️ Tarea de mantenimiento diario configurada (ciclo de 24 horas).");
     }
 }

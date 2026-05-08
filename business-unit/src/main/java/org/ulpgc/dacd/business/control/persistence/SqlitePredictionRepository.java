@@ -102,7 +102,8 @@ public class SqlitePredictionRepository implements PredictionRepository {
         return (targetProbability * oddPrice) - 1;
     }
 
-    private void cleanOldPredictions() {
+    @Override
+    public void cleanOldPredictions() {
         String deleteSQL = "DELETE FROM predictions WHERE datetime(match_date) < datetime('now', '-1 day')";
 
         try (Connection conn = DriverManager.getConnection(dbUrl);
