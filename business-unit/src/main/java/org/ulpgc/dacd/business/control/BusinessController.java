@@ -1,15 +1,18 @@
 package org.ulpgc.dacd.business.control;
 
 import com.google.gson.Gson;
+import org.ulpgc.dacd.business.control.persistence.PredictionRepository;
 import org.ulpgc.dacd.business.model.OddsEvent;
 import java.util.Map;
 
 public class BusinessController {
     private final PredictionService predictionService;
+    private final PredictionRepository repository;
     private final Gson gson;
 
-    public BusinessController(PredictionService predictionService) {
+    public BusinessController(PredictionService predictionService, PredictionRepository repository) {
         this.predictionService = predictionService;
+        this.repository = repository;
         this.gson = new Gson();
     }
 
@@ -17,14 +20,29 @@ public class BusinessController {
         try {
             OddsEvent odd = gson.fromJson(rawJson, OddsEvent.class);
 
+            if (!"h2h".equalsIgnoreCase(odd.marketKey())) {
+                return;
+            }
+
             String homeTeam = TeamNameMapper.getOfficialName(odd.match().homeTeam());
             String awayTeam = TeamNameMapper.getOfficialName(odd.match().awayTeam());
             String commenceTime = odd.match().commenceTime();
 
-            System.out.println("\n⚡ [NUEVA CUOTA RECIBIDA] " + odd.bookmaker().title() + " -> " + odd.outcomeName() + " a " + odd.price());
+            System.out.println("\n⚡ [NUEVA CUOTA h2h RECIBIDA] " + odd.bookmaker().title() + " -> " + odd.outcomeName() + " a " + odd.price());
             Map<Long, Double> probabilities = predictionService.getOrCalculateProbabilities(homeTeam, awayTeam, commenceTime);
 
             printPredictionResults(probabilities);
+
+            repository.savePrediction(
+                    commenceTime,
+                    homeTeam,
+                    awayTeam,
+                    odd.bookmaker().title(),
+                    odd.marketKey(),
+                    odd.outcomeName(),
+                    odd.price(),
+                    probabilities
+            );
 
         } catch (Exception e) {
             System.err.println("❌ Error procesando el JSON de la cuota: " + e.getMessage());

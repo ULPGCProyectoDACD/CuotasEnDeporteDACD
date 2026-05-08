@@ -10,6 +10,9 @@ import org.ulpgc.dacd.business.control.stats.EventStoreTeamStatsManager;
 import org.ulpgc.dacd.business.control.stats.TeamStatsManager;
 import org.ulpgc.dacd.business.control.trainer.ModelTrainer;
 import org.ulpgc.dacd.business.control.trainer.PythonModelTrainer;
+// Nuevos imports para SQLite
+import org.ulpgc.dacd.business.control.persistence.PredictionRepository;
+import org.ulpgc.dacd.business.control.persistence.SqlitePredictionRepository;
 
 public class BusinessUnitApp {
     public void start() {
@@ -23,8 +26,9 @@ public class BusinessUnitApp {
             System.out.println("\n--- INICIANDO SISTEMA CORE ---");
             statsManager.loadStatsFromEventStore(PathResolver.resolveEventStorePath());
 
+            PredictionRepository repository = new SqlitePredictionRepository("database/predictions.db");
             PredictionService predictionService = new PredictionService(statsManager, predictor);
-            BusinessController controller = new BusinessController(predictionService);
+            BusinessController controller = new BusinessController(predictionService, repository);
 
             System.out.println("\n--- ARRANCANDO ESCUCHADOR DE CUOTAS ---");
             OddsReceiver receiver = new ActiveMQOddsReceiver("tcp://localhost:61616", "FootballOdd", controller::processOddsMessage);
