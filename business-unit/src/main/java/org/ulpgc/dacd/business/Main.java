@@ -1,6 +1,8 @@
 package org.ulpgc.dacd.business;
 
 import org.ulpgc.dacd.business.control.BusinessController;
+import org.ulpgc.dacd.business.control.jms.ActiveMQOddsReceiver;
+import org.ulpgc.dacd.business.control.jms.OddsReceiver;
 import org.ulpgc.dacd.business.control.predictor.MatchPredictor;
 import org.ulpgc.dacd.business.control.predictor.OnnxMatchPredictor;
 import org.ulpgc.dacd.business.control.stats.EventStoreTeamStatsManager;
@@ -26,8 +28,18 @@ public class Main {
             TeamStatsManager statsManager = new EventStoreTeamStatsManager();
             MatchPredictor predictor = new OnnxMatchPredictor(modelPath);
             BusinessController controller = new BusinessController(statsManager, predictor);
+            controller.init(eventStorePath);
 
-            controller.execute(eventStorePath);
+            System.out.println("\n--- ARRANCANDO ESCUCHADOR DE CUOTAS ---");
+            String brokerUrl = "tcp://localhost:61616";
+            String topicName = "FootballOdd";
+
+            OddsReceiver receiver = new ActiveMQOddsReceiver(
+                    brokerUrl,
+                    topicName,
+                    controller::processOddsMessage
+            );
+            receiver.start();
 
         } catch (Exception e) {
             System.err.println("❌ Error crítico al arrancar el sistema: " + e.getMessage());

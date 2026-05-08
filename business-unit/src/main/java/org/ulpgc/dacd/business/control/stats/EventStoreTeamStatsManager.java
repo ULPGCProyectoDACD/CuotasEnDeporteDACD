@@ -108,7 +108,7 @@ public class EventStoreTeamStatsManager implements TeamStatsManager {
 
     public float[] getTeamStats(String teamName) {
         if (!history.containsKey(teamName) || history.get(teamName).isEmpty()) {
-            return new float[]{0f, 0f, 0f};
+            throw new IllegalArgumentException("No se encontraron estadísticas para el equipo: " + teamName);
         }
 
         List<MatchStat> recentMatches = history.get(teamName);
