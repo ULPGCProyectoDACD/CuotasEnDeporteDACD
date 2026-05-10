@@ -17,16 +17,6 @@
 <div class="sticky-shell">
 
     
-    <div class="ticker-rail" id="ticker-rail">
-        <div class="ticker-label">
-            <span class="ticker-dot"></span>LIVE
-        </div>
-        <div class="ticker-track">
-            <div class="ticker-inner" id="ticker-inner">
-                <span class="ticker-placeholder">Cargando cuotas...</span>
-            </div>
-        </div>
-    </div>
 
     
     <header id="main-header">
@@ -50,7 +40,6 @@
         </div>
     </header>
 
-    
     <nav id="main-nav">
         <div class="nav-container">
             <button class="nav-tab active" data-view="global" id="tab-global">
@@ -71,10 +60,8 @@
 </div>
 
 
-
 <main id="main-content">
 
-    
     <section class="stats-row" id="stats-row">
         <div class="stat-card" id="stat-total">
             <div class="stat-value mono">—</div>
@@ -85,12 +72,14 @@
             <div class="stat-label">Value Bets</div>
         </div>
         <div class="stat-card" id="stat-best-index">
+            
             <div class="stat-value mono">—</div>
-            <div class="stat-label">Mejor Índice</div>
+            <div class="stat-label">Mejor Índice de Riesgo</div>
         </div>
         <div class="stat-card" id="stat-avg-index">
+            
             <div class="stat-value mono">—</div>
-            <div class="stat-label">Índice Medio</div>
+            <div class="stat-label">Índice de Riesgo Medio</div>
         </div>
     </section>
 
@@ -116,8 +105,8 @@
 
         <div class="chart-panel glass-panel chart-panel--wide">
             <div class="chart-header">
-                <h3 class="chart-title">Casas de Apuestas</h3>
-                <span class="chart-subtitle">Índice de riesgo medio por operador</span>
+                <h3 class="chart-title" id="bar-chart-title">Casas de Apuestas</h3>
+                <span class="chart-subtitle" id="bar-chart-subtitle">Índice de riesgo medio por operador</span>
             </div>
             <div class="bar-wrapper">
                 <canvas id="bar-chart"></canvas>
@@ -125,7 +114,6 @@
         </div>
     </section>
 
-    
     <section class="filter-bar hidden" id="filter-bar">
         <div class="filter-group">
             <label class="filter-label" id="filter-label">Selecciona:</label>
@@ -166,7 +154,8 @@
                     <th>Pronóstico</th>
                     <th>Cuota</th>
                     <th>Probabilidades</th>
-                    <th>Índice Riesgo</th>
+                    
+                    <th>Índice de Riesgo</th>
                 </tr>
                 </thead>
                 <tbody id="table-body">
@@ -186,7 +175,6 @@
         </div>
     </section>
 
-    
     <section class="empty-state hidden" id="empty-state">
         <div class="empty-icon">◌</div>
         <h3>Sin datos disponibles</h3>
@@ -194,6 +182,20 @@
     </section>
 
 </main>
+
+
+<div id="odds-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-match-title">
+    <div class="modal-box">
+        <button class="modal-close" id="modal-close" aria-label="Cerrar">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M3 3l10 10M13 3L3 13"/>
+            </svg>
+        </button>
+        <div class="modal-match-header" id="modal-match-title"></div>
+        <div class="modal-section-label">Cuotas disponibles</div>
+        <div class="modal-odds-list" id="modal-odds-list"></div>
+    </div>
+</div>
 
 <footer id="main-footer">
     <div class="footer-inner">
