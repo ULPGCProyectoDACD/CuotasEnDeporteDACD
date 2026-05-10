@@ -37,5 +37,6 @@ public class OddsController {
                 System.err.println("[OddsController] Error publicando evento: " + e.getMessage());
             }
         }
+        System.out.println("✅ ¡Éxito! Se han publicado " + odds.size() + " cuotas en ActiveMQ.");
     }
 }

@@ -51,3 +51,8 @@ machine-learning/match_model.onnx
 
 # Entorno virtual de python
 machine-learning/venv/
+__pycache__/
+
+# Bases de datos locales
+database/
+*.db
