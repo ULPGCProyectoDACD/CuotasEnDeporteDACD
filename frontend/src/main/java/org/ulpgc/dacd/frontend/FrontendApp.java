@@ -17,9 +17,8 @@ public class FrontendApp {
 
         Javalin app = Javalin.create(config -> {
             config.staticFiles.add("/public");
-            config.bundledPlugins.enableCors(cors ->
-                    cors.addRule(it -> it.anyHost())
-            );
+            config.http.gzipOnlyCompression();
+            config.bundledPlugins.enableCors(cors -> cors.addRule(it -> it.anyHost()));
         });
 
         app.get("/api/predictions", controller::getPredictions);

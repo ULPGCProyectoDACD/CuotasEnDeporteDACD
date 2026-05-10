@@ -44,11 +44,21 @@ public class SqlitePredictionRepository implements PredictionRepository {
             );
             """;
 
+        String createIndexesSQL = """
+            CREATE INDEX IF NOT EXISTS idx_teams ON predictions(home_team, away_team);
+            CREATE INDEX IF NOT EXISTS idx_bookmaker ON predictions(bookmaker);
+            CREATE INDEX IF NOT EXISTS idx_benefit ON predictions(benefit_risk_index DESC);
+            """;
+
         try (Connection conn = DriverManager.getConnection(dbUrl);
              Statement stmt = conn.createStatement()) {
+            stmt.execute("PRAGMA journal_mode=WAL;");
+            stmt.execute("PRAGMA synchronous=NORMAL;");
             stmt.execute(createTableSQL);
+            stmt.execute(createIndexesSQL);
+
         } catch (SQLException e) {
-            System.err.println("❌ Error creando la base de datos: " + e.getMessage());
+            System.err.println("❌ Error inicializando la base de datos: " + e.getMessage());
         }
     }
 

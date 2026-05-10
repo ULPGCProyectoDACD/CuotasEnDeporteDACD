@@ -11,22 +11,36 @@ import java.util.TreeSet;
 
 public class SqlitePredictionReader implements PredictionReader {
     private final String dbUrl;
+    private Connection connection;
+    private FilterOptionsDTO filterCache = null;
 
     public SqlitePredictionReader(String dbPath) {
         File file = new File(dbPath);
         if (!file.exists()) {
-            System.err.println("⚠️ [Frontend] Base de datos no encontrada en: " + dbPath
-                    + ". El dashboard mostrará datos vacíos hasta que business-unit genere predicciones.");
+            System.err.println("⚠️ [Frontend] Base de datos no encontrada en: " + dbPath);
         }
         this.dbUrl = "jdbc:sqlite:" + dbPath;
+        initConnection();
+    }
+
+    private void initConnection() {
+        try {
+            this.connection = DriverManager.getConnection(dbUrl);
+            try (Statement stmt = connection.createStatement()) {
+                stmt.execute("PRAGMA journal_mode=WAL;");
+                stmt.execute("PRAGMA synchronous=NORMAL;");
+            }
+        } catch (SQLException e) {
+            System.err.println("❌ [Frontend] Error inicializando conexión: " + e.getMessage());
+        }
     }
 
     @Override
     public List<PredictionDTO> getPredictions(String team, String bookmaker) {
         StringBuilder sql = new StringBuilder(
                 "SELECT id, match_date, home_team, away_team, bookmaker, market, outcome, " +
-                "odd_price, prob_home, prob_draw, prob_away, benefit_risk_index, timestamp " +
-                "FROM predictions WHERE 1=1 ");
+                        "odd_price, prob_home, prob_draw, prob_away, benefit_risk_index, timestamp " +
+                        "FROM predictions WHERE 1=1 ");
 
         List<String> params = new ArrayList<>();
 
@@ -45,9 +59,7 @@ public class SqlitePredictionReader implements PredictionReader {
 
         List<PredictionDTO> results = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(dbUrl);
-             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-
+        try (PreparedStatement pstmt = connection.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 pstmt.setString(i + 1, params.get(i));
             }
@@ -66,27 +78,32 @@ public class SqlitePredictionReader implements PredictionReader {
 
     @Override
     public FilterOptionsDTO getFilterOptions() {
+        if (filterCache != null) return filterCache;
+
         TreeSet<String> teams = new TreeSet<>();
         List<String> bookmakers = new ArrayList<>();
 
-        try (Connection conn = DriverManager.getConnection(dbUrl)) {
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery("SELECT DISTINCT home_team FROM predictions")) {
+        try {
+            String teamSql = "SELECT DISTINCT home_team FROM predictions UNION SELECT DISTINCT away_team FROM predictions";
+            try (Statement stmt = connection.createStatement();
+                 ResultSet rs = stmt.executeQuery(teamSql)) {
                 while (rs.next()) teams.add(rs.getString(1));
             }
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery("SELECT DISTINCT away_team FROM predictions")) {
-                while (rs.next()) teams.add(rs.getString(1));
-            }
-            try (Statement stmt = conn.createStatement();
+
+            try (Statement stmt = connection.createStatement();
                  ResultSet rs = stmt.executeQuery("SELECT DISTINCT bookmaker FROM predictions ORDER BY bookmaker")) {
                 while (rs.next()) bookmakers.add(rs.getString(1));
             }
+
+            if (!teams.isEmpty() || !bookmakers.isEmpty()) {
+                this.filterCache = new FilterOptionsDTO(new ArrayList<>(teams), bookmakers);
+            }
+
         } catch (SQLException e) {
             System.err.println("❌ [Frontend] Error leyendo filtros: " + e.getMessage());
         }
 
-        return new FilterOptionsDTO(new ArrayList<>(teams), bookmakers);
+        return filterCache != null ? filterCache : new FilterOptionsDTO(new ArrayList<>(), new ArrayList<>());
     }
 
     private PredictionDTO mapRow(ResultSet rs) throws SQLException {
