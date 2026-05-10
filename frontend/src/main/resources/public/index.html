@@ -7,129 +7,202 @@
     <title>CuotasEnDeporte — Dashboard de Riesgo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
 
-    <!-- ═══════ HEADER ═══════ -->
+
+<div class="sticky-shell">
+
+    
+    <div class="ticker-rail" id="ticker-rail">
+        <div class="ticker-label">
+            <span class="ticker-dot"></span>LIVE
+        </div>
+        <div class="ticker-track">
+            <div class="ticker-inner" id="ticker-inner">
+                <span class="ticker-placeholder">Cargando cuotas...</span>
+            </div>
+        </div>
+    </div>
+
+    
     <header id="main-header">
         <div class="header-content">
             <div class="logo-section">
-                <div class="logo-icon">⚽</div>
+                <div class="logo-mark">
+                    <span class="logo-gem"></span>
+                </div>
                 <div>
                     <h1>CuotasEnDeporte</h1>
                     <p class="subtitle">Análisis Inteligente de Riesgo</p>
                 </div>
             </div>
-            <div class="header-status">
-                <span class="status-dot" id="status-dot"></span>
-                <span class="status-text" id="status-text">Conectando...</span>
+            <div class="header-right">
+                <div class="connection-status">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span class="status-text mono" id="status-text">Conectando…</span>
+                </div>
+                <div class="last-update mono" id="last-update">—</div>
             </div>
         </div>
     </header>
 
-    <!-- ═══════ NAVIGATION TABS ═══════ -->
+    
     <nav id="main-nav">
         <div class="nav-container">
             <button class="nav-tab active" data-view="global" id="tab-global">
-                <span class="tab-icon">🏆</span>
-                <span class="tab-label">Mejores Cuotas</span>
+                <span class="tab-icon">◈</span>
+                <span class="tab-label">Ranking Global</span>
             </button>
             <button class="nav-tab" data-view="team" id="tab-team">
-                <span class="tab-icon">⚽</span>
+                <span class="tab-icon">◉</span>
                 <span class="tab-label">Por Equipo</span>
             </button>
             <button class="nav-tab" data-view="bookmaker" id="tab-bookmaker">
-                <span class="tab-icon">🏛️</span>
+                <span class="tab-icon">◎</span>
                 <span class="tab-label">Por Casa de Apuestas</span>
             </button>
         </div>
     </nav>
 
-    <!-- ═══════ MAIN CONTENT ═══════ -->
-    <main id="main-content">
+</div>
 
-        <!-- ── FILTER BAR (visible for team & bookmaker views) ── -->
-        <section class="filter-bar hidden" id="filter-bar">
-            <div class="filter-group">
-                <label class="filter-label" id="filter-label">Selecciona:</label>
-                <div class="select-wrapper">
-                    <select id="filter-select" class="filter-select">
-                        <option value="">— Cargando opciones... —</option>
-                    </select>
+
+
+<main id="main-content">
+
+    
+    <section class="stats-row" id="stats-row">
+        <div class="stat-card" id="stat-total">
+            <div class="stat-value mono">—</div>
+            <div class="stat-label">Total Cuotas</div>
+        </div>
+        <div class="stat-card accent" id="stat-value-bets">
+            <div class="stat-value mono">—</div>
+            <div class="stat-label">Value Bets</div>
+        </div>
+        <div class="stat-card" id="stat-best-index">
+            <div class="stat-value mono">—</div>
+            <div class="stat-label">Mejor Índice</div>
+        </div>
+        <div class="stat-card" id="stat-avg-index">
+            <div class="stat-value mono">—</div>
+            <div class="stat-label">Índice Medio</div>
+        </div>
+    </section>
+
+    
+    <section class="charts-row" id="charts-row">
+        <div class="chart-panel glass-panel">
+            <div class="chart-header">
+                <h3 class="chart-title">Distribución Value Bets</h3>
+                <span class="chart-subtitle">% del total de predicciones</span>
+            </div>
+            <div class="donut-wrapper">
+                <canvas id="donut-chart"></canvas>
+                <div class="donut-center" id="donut-center">
+                    <div class="donut-pct mono">—</div>
+                    <div class="donut-lbl">Value</div>
                 </div>
             </div>
-        </section>
-
-        <!-- ── STATS CARDS ── -->
-        <section class="stats-row" id="stats-row">
-            <div class="stat-card" id="stat-total">
-                <div class="stat-value">—</div>
-                <div class="stat-label">Total Cuotas</div>
+            <div class="donut-legend">
+                <span class="legend-item"><span class="legend-dot neon"></span>Value Bets</span>
+                <span class="legend-item"><span class="legend-dot violet"></span>Sin valor</span>
             </div>
-            <div class="stat-card highlight" id="stat-value-bets">
-                <div class="stat-value">—</div>
-                <div class="stat-label">Value Bets</div>
-            </div>
-            <div class="stat-card" id="stat-best-index">
-                <div class="stat-value">—</div>
-                <div class="stat-label">Mejor Índice</div>
-            </div>
-            <div class="stat-card" id="stat-avg-index">
-                <div class="stat-value">—</div>
-                <div class="stat-label">Índice Medio</div>
-            </div>
-        </section>
+        </div>
 
-        <!-- ── DATA TABLE ── -->
-        <section class="table-container glass-panel" id="table-container">
-            <div class="table-header-bar">
-                <h2 class="table-title" id="table-title">🏆 Mejores Cuotas — Ranking Global de Riesgo</h2>
-                <span class="result-count" id="result-count"></span>
+        <div class="chart-panel glass-panel chart-panel--wide">
+            <div class="chart-header">
+                <h3 class="chart-title">Casas de Apuestas</h3>
+                <span class="chart-subtitle">Índice de riesgo medio por operador</span>
             </div>
-            <div class="table-scroll">
-                <table id="predictions-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Partido</th>
-                            <th>Fecha</th>
-                            <th>Casa de Apuestas</th>
-                            <th>Pronóstico</th>
-                            <th>Cuota</th>
-                            <th>P. Local</th>
-                            <th>P. Empate</th>
-                            <th>P. Visitante</th>
-                            <th>Índice Riesgo</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
-                        <tr class="loading-row">
-                            <td colspan="10">
-                                <div class="loader"></div>
-                                <span>Cargando predicciones...</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="bar-wrapper">
+                <canvas id="bar-chart"></canvas>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- ── EMPTY STATE ── -->
-        <section class="empty-state hidden" id="empty-state">
-            <div class="empty-icon">📊</div>
-            <h3>Sin datos disponibles</h3>
-            <p>No hay predicciones registradas aún. Asegúrate de que el módulo <strong>business-unit</strong> está ejecutándose y recibiendo cuotas por ActiveMQ.</p>
-        </section>
+    
+    <section class="filter-bar hidden" id="filter-bar">
+        <div class="filter-group">
+            <label class="filter-label" id="filter-label">Selecciona:</label>
+            <div class="select-wrapper">
+                <select id="filter-select" class="filter-select">
+                    <option value="">— Cargando opciones… —</option>
+                </select>
+            </div>
+        </div>
+    </section>
 
-    </main>
+    
+    <section class="top5-section" id="top5-section">
+        <div class="section-heading">
+            <span class="section-badge mono">TOP 5</span>
+            <h2 class="section-title" id="table-title">Ranking Global de Riesgo</h2>
+            <span class="result-count mono" id="result-count"></span>
+        </div>
+        <div class="top5-grid" id="top5-grid">
+            
+        </div>
+    </section>
 
-    <!-- ═══════ FOOTER ═══════ -->
-    <footer id="main-footer">
-        <p>CuotasEnDeporteDACD &middot; ULPGC &middot; Datos actualizados cada <span id="refresh-interval">30</span>s</p>
-    </footer>
+    
+    <section class="table-section glass-panel hidden" id="table-container">
+        <div class="table-header-bar">
+            <h3 class="table-subtitle">Resto de Predicciones</h3>
+            <span class="table-range mono" id="table-range"></span>
+        </div>
+        <div class="table-scroll">
+            <table id="predictions-table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Partido</th>
+                    <th>Fecha</th>
+                    <th>Casa</th>
+                    <th>Pronóstico</th>
+                    <th>Cuota</th>
+                    <th>Probabilidades</th>
+                    <th>Índice Riesgo</th>
+                </tr>
+                </thead>
+                <tbody id="table-body">
+                <tr class="loading-row">
+                    <td colspan="8">
+                        <div class="spinner"></div>
+                        <span>Cargando predicciones…</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination-controls hidden" id="pagination-controls">
+            <button id="btn-prev-page" class="btn-page" disabled>← Anterior</button>
+            <span class="page-info mono" id="page-info">1 / 1</span>
+            <button id="btn-next-page" class="btn-page" disabled>Siguiente →</button>
+        </div>
+    </section>
 
-    <script src="/js/app.js"></script>
+    
+    <section class="empty-state hidden" id="empty-state">
+        <div class="empty-icon">◌</div>
+        <h3>Sin datos disponibles</h3>
+        <p>No hay predicciones registradas aún. Asegúrate de que el módulo <strong>business-unit</strong> está ejecutándose y recibiendo cuotas por ActiveMQ.</p>
+    </section>
+
+</main>
+
+<footer id="main-footer">
+    <div class="footer-inner">
+        <span class="footer-brand">CuotasEnDeporte</span>
+        <span class="footer-sep">·</span>
+        <span>DACD · ULPGC</span>
+    </div>
+</footer>
+
+<script src="/js/app.js"></script>
 </body>
 </html>

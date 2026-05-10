@@ -24,7 +24,7 @@ def main():
         all_matches.extend(process_file(file_path))
 
     print("Calculando rachas y generando el Dataset...")
-    df = calculate_streaks_and_save(all_matches, CSV_OUTPUT_PATH, window_size=5)
+    df = calculate_streaks_and_save(all_matches, CSV_OUTPUT_PATH, window_size=20)
     
     if df is not None:
         train_and_export_model(df, ONNX_LOCAL_PATH)

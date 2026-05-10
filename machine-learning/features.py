@@ -1,7 +1,7 @@
 import pandas as pd
 
 class TeamHistory:
-    def __init__(self, window_size=5):
+    def __init__(self, window_size=20):
         self.history = {}
         self.window_size = window_size
 
@@ -26,7 +26,7 @@ class TeamHistory:
             self.history[team_name].pop(0)
 
 
-def calculate_streaks_and_save(matches, output_path, window_size=5):
+def calculate_streaks_and_save(matches, output_path, window_size=20):
     df = pd.DataFrame(matches)
     if df.empty: return None
 

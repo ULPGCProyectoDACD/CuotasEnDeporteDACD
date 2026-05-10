@@ -33,9 +33,8 @@ public class FrontendApp {
 
         System.out.println("\n" +
                 "╔══════════════════════════════════════════════════════╗\n" +
-                "║   🏆 FRONTEND - CuotasEnDeporteDACD                 ║\n" +
-                "║   📡 API:       http://localhost:" + PORT + "/api          ║\n" +
-                "║   🌐 Frontend:  http://localhost:" + PORT + "              ║\n" +
+                "║                 CuotasEnDeporteDACD                  ║\n" +
+                "║   🌐 Frontend:  http://localhost:" + PORT + "        ║\n" +
                 "╚══════════════════════════════════════════════════════╝\n"
         );
     }
