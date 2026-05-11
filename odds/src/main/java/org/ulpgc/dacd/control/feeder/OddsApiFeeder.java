@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 public class OddsApiFeeder implements OddsFeeder {
 
-    private static final String API_URL_TEMPLATE = "https://api.the-odds-api.com/v4/sports/soccer_spain_la_liga/odds/?apiKey=%s&regions=eu&markets=h2h,totals&oddsFormat=decimal";
+    private static final String API_URL_TEMPLATE = "https://api.the-odds-api.com/v4/sports/soccer_spain_la_liga/odds/?apiKey=%s&regions=eu&markets=h2h&oddsFormat=decimal";
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
     private final String apiKey;
 
@@ -72,6 +72,7 @@ public class OddsApiFeeder implements OddsFeeder {
         BookmakerContext bookmarker = parseBookmakerContext(bookmaker);
         return toStream(bookmaker.getAsJsonArray("markets"))
                 .map(JsonElement::getAsJsonObject)
+                .filter(market -> "h2h".equalsIgnoreCase(market.get("key").getAsString()))
                 .flatMap(market -> extractOddsFromMarket(matchContext, bookmarker, market, capturedAt).stream())
                 .toList();
     }
