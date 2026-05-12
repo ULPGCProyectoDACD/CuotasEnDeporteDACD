@@ -1054,7 +1054,8 @@ td { padding: 0.78rem 1.25rem; vertical-align: middle; }
     width: 36px;
 }
 
-.match-cell  { display: flex; flex-direction: column; gap: 1px; }
+.match-cell  { display: flex; flex-direction: column; gap: 3px; }
+.match-team-row { display: flex; align-items: center; gap: 6px; }
 .match-home,
 .match-away {
     font-family: 'Syne', sans-serif;
@@ -1064,7 +1065,13 @@ td { padding: 0.78rem 1.25rem; vertical-align: middle; }
     line-height: 1.35;
     padding-bottom: 2px;
 }
-.match-vs    { font-size: 0.54rem; color: var(--t3); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; }
+.match-vs    { font-size: 0.54rem; color: var(--t3); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; margin-left: 22px; }
+
+.team-logo { width: 16px; height: 16px; object-fit: contain; }
+.card-team { display: flex; align-items: center; gap: 8px; justify-content: center; }
+.card-team .team-logo { width: 20px; height: 20px; }
+.team-logo-fallback { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.08); color: var(--t2); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; font-family: 'Syne', sans-serif;}
+.card-team .team-logo-fallback { width: 20px; height: 20px; font-size: 11px; }
 
 .date-cell {
     font-family: 'JetBrains Mono', monospace;

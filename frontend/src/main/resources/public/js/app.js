@@ -546,9 +546,9 @@
                     ${extra > 0 ? `<span class="more-badge">${extra + 1} casas</span>` : ''}
                 </div>
                 <div class="card-match">
-                    <div class="card-team">${esc(p.homeTeam)}</div>
+                    <div class="card-team">${teamLogoHTML(p.homeTeam)}<span>${esc(p.homeTeam)}</span></div>
                     <div class="card-vs">vs</div>
-                    <div class="card-team">${esc(p.awayTeam)}</div>
+                    <div class="card-team">${teamLogoHTML(p.awayTeam)}<span>${esc(p.awayTeam)}</span></div>
                 </div>
                 <div class="card-meta">
                     <span class="card-meta-item">${SVG.calendar} ${formatDate(p.matchDate)}</span>
@@ -592,7 +592,11 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="rank-cell">${globalRank}</td>
-                <td><div class="match-cell"><span class="match-home">${esc(p.homeTeam)}</span><span class="match-vs">vs</span><span class="match-away">${esc(p.awayTeam)}</span></div></td>
+                <td><div class="match-cell">
+                    <div class="match-team-row">${teamLogoHTML(p.homeTeam)}<span class="match-home">${esc(p.homeTeam)}</span></div>
+                    <span class="match-vs">vs</span>
+                    <div class="match-team-row">${teamLogoHTML(p.awayTeam)}<span class="match-away">${esc(p.awayTeam)}</span></div>
+                </div></td>
                 <td class="date-cell">${formatDateShort(p.matchDate)}</td>
                 <td class="bookmaker-cell">${esc(p.bookmaker)}${extra > 0 ? `<span class="more-count">+${extra}</span>` : ''}</td>
                 <td><span class="outcome-badge ${isDrawOutcome(p.outcome) ? 'draw' : ''}">${isDrawOutcome(p.outcome) ? 'Empate' : esc(p.outcome)}</span></td>
@@ -720,6 +724,16 @@
     function formatDate(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return str; } }
     function formatDateShort(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return str; } }
     function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+
+    window.handleImgErr = function(img, teamName) {
+        img.onerror = null;
+        img.outerHTML = `<div class="team-logo-fallback">${esc(teamName.charAt(0))}</div>`;
+    };
+    function teamLogoHTML(teamName) {
+        if (!teamName) return '';
+        const fileName = teamName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, '');
+        return `<img src="img/teams/${fileName}.svg" alt="" class="team-logo" onerror="handleImgErr(this, '${esc(teamName).replace(/'/g, "\\'")}')">`;
+    }
 
     function generateMockData(view, filter) {
         const teams = ['Real Madrid', 'FC Barcelona', 'Sevilla', 'Athletic Club'];
