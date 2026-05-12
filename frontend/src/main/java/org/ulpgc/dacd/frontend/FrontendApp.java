@@ -4,6 +4,7 @@ import io.javalin.Javalin;
 import org.ulpgc.dacd.frontend.controller.PredictionController;
 import org.ulpgc.dacd.frontend.repository.PredictionReader;
 import org.ulpgc.dacd.frontend.repository.SqlitePredictionReader;
+//import org.ulpgc.dacd.frontend.repository.MockPredictionReader;
 
 import java.util.Map;
 
@@ -13,6 +14,7 @@ public class FrontendApp {
 
     public void start() {
         PredictionReader reader = new SqlitePredictionReader(DB_PATH);
+        //PredictionReader reader = new MockPredictionReader();
         PredictionController controller = new PredictionController(reader);
 
         Javalin app = Javalin.create(config -> {
@@ -26,8 +28,7 @@ public class FrontendApp {
         app.get("/api/health", ctx -> ctx.json(Map.of(
                 "status", "ok",
                 "module", "frontend",
-                "port", PORT
-        )));
+                "port", PORT)));
 
         app.start(PORT);
 
@@ -35,7 +36,6 @@ public class FrontendApp {
                 "╔══════════════════════════════════════════════════════╗\n" +
                 "║                 CuotasEnDeporteDACD                  ║\n" +
                 "║   🌐 Frontend:  http://localhost:" + PORT + "        ║\n" +
-                "╚══════════════════════════════════════════════════════╝\n"
-        );
+                "╚══════════════════════════════════════════════════════╝\n");
     }
 }
