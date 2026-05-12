@@ -68,6 +68,7 @@
         modalClose: $('modal-close'),
         modalMatchTitle: $('modal-match-title'),
         modalOddsList: $('modal-odds-list'),
+        sectionBadge: $('section-badge'),
     };
 
     const SVG = {
@@ -123,7 +124,7 @@
 
         const centerTextPlugin = {
             id: 'centerText',
-            beforeDraw: function(chart) {
+            beforeDraw: function (chart) {
                 if (chart.config.options.elements && chart.config.options.elements.center) {
                     const ctx = chart.ctx;
                     const centerConfig = chart.config.options.elements.center;
@@ -135,7 +136,7 @@
                     const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
                     const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
                     ctx.fillText(centerConfig.text, centerX, centerY - 4);
-                    
+
                     if (centerConfig.subText) {
                         ctx.font = "600 12px 'Syne', sans-serif";
                         ctx.fillStyle = THEME.textMuted;
@@ -275,9 +276,14 @@
             showEmpty();
         } else {
             const topLimit = currentView === 'team' ? 3 : TOP_N;
+            const topSlice = matchGroups.slice(0, topLimit);
             updateStats(allPredictions);
             updateCharts(allPredictions);
-            renderTop5(matchGroups.slice(0, topLimit));
+            renderTop5(topSlice);
+
+            if (dom.sectionBadge) {
+                dom.sectionBadge.textContent = `TOP ${topSlice.length}`;
+            }
             renderTable(matchGroups.slice(topLimit));
 
             dom.resultCount.textContent = `${matchGroups.length} partidos · ${allPredictions.length} predicciones`;
@@ -299,10 +305,10 @@
 
     function updateStats(predictions) {
         const total = predictions.length;
-        const valCnt = predictions.filter(p => p.benefitRiskIndex > 0).length;
+        const valCnt = predictions.filter(p => p.benefitRiskIndex > 0.2).length;
         const best = total ? Math.max(...predictions.map(p => p.benefitRiskIndex)) : 0;
         const avgVal = total ? predictions.reduce((s, p) => s + p.benefitRiskIndex, 0) / total : 0;
-        const sign = v => (v >= 0 ? '+' : '');
+        const sign = v => (parseFloat(v.toFixed(3)) > 0 ? '+' : '');
 
         countUp(dom.statTotal, total, 0);
         countUp(dom.statValueBets, valCnt, 0);
@@ -320,8 +326,8 @@
     }
 
     function getRiskColor(idx) {
-        if (idx > 0) return THEME.amber;
-        if (idx > -0.15) return THEME.slate;
+        if (idx > 0.2) return THEME.amber;
+        if (idx >= -0.2) return THEME.slate;
         return THEME.rose;
     }
 
@@ -332,27 +338,25 @@
 
     function renderGlobalCharts(predictions) {
         setChartCopy(
-            'Rentabilidad Promedio por Casa', 'Índice matemático del mercado (Dorado = Ventaja a favor)',
-            'Distribución de Oportunidades', 'Volumen de Value Bets detectadas vs Cuotas sin valor'
+            'Mejores Casas de Apuestas', 'Ganancia esperada según la casa de apuestas',
+            'Distribución de Value Bets', 'Volumen de Value Bets detectadas en el mercado'
         );
 
         const bookmakerRisk = avgEntries(predictions, p => p.bookmaker, p => p.benefitRiskIndex)
             .sort((a, b) => b.value - a.value);
-        
-        // Mostrar los 5 mejores y los 5 peores para ver la realidad del mercado
-        const top5 = bookmakerRisk.slice(0, 5);
-        const bottom5 = bookmakerRisk.length > 5 ? bookmakerRisk.slice(-5) : [];
-        const combined = [...top5, ...bottom5].filter((v, i, a) => a.findIndex(t => t.label === v.label) === i);
+
+        // Mostrar solo los 10 mejores para coincidir con el título "Mejores Casas"
+        const top10 = bookmakerRisk.slice(0, 10);
 
         charts.primary = new Chart($('primary-chart'), horizontalBarConfig(
-            combined.map(e => e.label), combined.map(e => fixed(e.value)), 'Índice de Ventaja'
+            top10.map(e => e.label), top10.map(e => fixed(e.value)), 'Ventaja Matemática'
         ));
 
-        const valueCnt = predictions.filter(p => p.benefitRiskIndex > 0).length;
+        const valueCnt = predictions.filter(p => p.benefitRiskIndex > 0.2).length;
         const total = predictions.length;
         const pct = total > 0 ? Math.round((valueCnt / total) * 100) : 0;
         charts.secondary = new Chart($('secondary-chart'), doughnutConfig(
-            ['Value Bets', 'Mercado Estándar'], [valueCnt, total - valueCnt], [THEME.amber, THEME.slate],
+            ['Value Bets', 'Mercado sin Ventaja'], [valueCnt, total - valueCnt], [THEME.amber, THEME.slate],
             `${pct}%`, 'VALUE BETS'
         ));
     }
@@ -360,16 +364,16 @@
     function renderTeamCharts(predictions) {
         const team = dom.filterSelect.value || 'Seleccionado';
         setChartCopy(
-            'Distribución de Calidad del Pronóstico', 'Categorización del riesgo en los próximos encuentros',
-            'Desviación Probabilística del Modelo', 'Comparativa: Algoritmo predictivo vs Probabilidad Implícita de la Casa'
+            'Volumen de Cuotas por Resultado', 'Cantidad de cuotas analizadas a favor del Local, Empate o Visitante',
+            'Predicción vs Casa de Apuestas', 'Porcentajes de acierto por resultado'
         );
 
         const stackData = (oStr) => {
             const preds = predictions.filter(p => (oStr === 'E' ? isDrawOutcome(p.outcome) : (oStr === 'L' ? p.outcome === p.homeTeam : p.outcome === p.awayTeam)));
             return {
-                pos: preds.filter(p => p.benefitRiskIndex > 0).length,
-                neu: preds.filter(p => p.benefitRiskIndex <= 0 && p.benefitRiskIndex > -0.15).length,
-                neg: preds.filter(p => p.benefitRiskIndex <= -0.15).length
+                pos: preds.filter(p => p.benefitRiskIndex > 0.2).length,
+                neu: preds.filter(p => p.benefitRiskIndex <= 0.2 && p.benefitRiskIndex >= -0.2).length,
+                neg: preds.filter(p => p.benefitRiskIndex < -0.2).length
             };
         };
         const dL = stackData('L'), dE = stackData('E'), dV = stackData('V');
@@ -381,14 +385,14 @@
 
         const getProbs = (outcomeStr) => {
             const preds = predictions.filter(p => {
-                if(outcomeStr === 'E') return isDrawOutcome(p.outcome);
-                if(outcomeStr === 'L') return p.outcome === p.homeTeam;
+                if (outcomeStr === 'E') return isDrawOutcome(p.outcome);
+                if (outcomeStr === 'L') return p.outcome === p.homeTeam;
                 return p.outcome === p.awayTeam;
             });
-            if(!preds.length) return { mod: 0, casa: 0 };
+            if (!preds.length) return { mod: 0, casa: 0 };
             return {
                 mod: avg(preds, p => modelProbabilityForOutcome(p)) * 100,
-                casa: avg(preds, p => (1/p.oddPrice)) * 100
+                casa: avg(preds, p => (1 / p.oddPrice)) * 100
             };
         };
 
@@ -402,21 +406,21 @@
 
     function renderBookmakerCharts(predictions) {
         setChartCopy(
-            'Máximo Valor Detectado (Chollos)', 'Picos de oportunidad: la mejor cuota encontrada por día',
-            'Consistencia del Margen (Peaks)', 'Seguimiento de las mejores cuotas encontradas por jornada'
+            'Partidos Más Rentables', 'Partidos con mayor ventaja para apostar',
+            'Evolución de las Oportunidades', 'Cambios de las mejores cuotas a lo largo de los días'
         );
 
         const byMatch = avgEntries(predictions, p => matchLabel(p), p => p.benefitRiskIndex)
             .sort((a, b) => b.value - a.value).slice(0, 10);
         charts.primary = new Chart($('primary-chart'), horizontalBarConfig(
-            byMatch.map(e => e.label), byMatch.map(e => fixed(e.value)), 'Margen a Favor'
+            byMatch.map(e => e.label), byMatch.map(e => fixed(e.value)), 'Ventaja'
         ));
 
-        const byDate = [...predictions].sort((a,b) => new Date(a.matchDate) - new Date(b.matchDate));
+        const byDate = [...predictions].sort((a, b) => new Date(a.matchDate) - new Date(b.matchDate));
         const timeData = maxEntries(byDate, p => formatDateShort(p.matchDate), p => p.benefitRiskIndex).slice(0, 15);
-        
+
         charts.secondary = new Chart($('secondary-chart'), lineConfig(
-            timeData.map(d => d.label), 
+            timeData.map(d => d.label),
             timeData.map(d => fixed(d.value)),
             timeData.map(d => d.match)
         ));
@@ -436,7 +440,7 @@
             data: {
                 labels,
                 datasets: [{
-                    label: 'Índice Riesgo', data,
+                    label: 'Ventaja', data,
                     borderColor: THEME.amber, backgroundColor: THEME.amberDim,
                     fill: true, tension: 0.3, pointBackgroundColor: data.map(v => getRiskColor(v)),
                     matches
@@ -453,7 +457,7 @@
                             const canvas = context.chart.canvas;
                             const container = canvas.parentElement;
                             let tooltipEl = container.querySelector('.chart-tooltip');
-                            
+
                             if (!tooltipEl) {
                                 tooltipEl = document.createElement('div');
                                 tooltipEl.className = 'chart-tooltip';
@@ -505,22 +509,22 @@
             data: {
                 labels,
                 datasets: [
-                    { label: 'Modelo de IA (%)', data: dataMod, backgroundColor: THEME.amber, borderRadius: 3 },
-                    { label: 'Casa de Apuestas (%)', data: dataCasa, backgroundColor: THEME.slate, borderRadius: 3 }
+                    { label: 'Predicción (%)', data: dataMod, backgroundColor: THEME.amber, borderRadius: 3 },
+                    { label: 'Casas de apuestas (%)', data: dataCasa, backgroundColor: THEME.slate, borderRadius: 3 }
                 ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { 
-                    legend: { 
-                        position: 'top', 
+                plugins: {
+                    legend: {
+                        position: 'top',
                         padding: 80,
-                        labels: { color: THEME.textMuted, usePointStyle: true } 
-                    } 
+                        labels: { color: THEME.textMuted, usePointStyle: true }
+                    }
                 },
-                scales: { 
-                    x: { grid: { display: false }, ticks: { color: THEME.textMuted } }, 
-                    y: { grid: { color: THEME.grid }, ticks: { color: THEME.textMuted } } 
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: THEME.textMuted } },
+                    y: { grid: { color: THEME.grid }, ticks: { color: THEME.textMuted } }
                 }
             }
         };
@@ -532,23 +536,29 @@
             data: {
                 labels,
                 datasets: [
-                    { label: 'Value Bet', data: dPos, backgroundColor: THEME.amber },
-                    { label: 'Riesgo Neutro', data: dNeu, backgroundColor: THEME.slate },
-                    { label: 'Mala Cuota', data: dNeg, backgroundColor: THEME.rose }
+                    { label: 'Value Bets', data: dPos, backgroundColor: THEME.amber },
+                    { label: 'Cuotas Neutras', data: dNeu, backgroundColor: THEME.slate },
+                    { label: 'Cuotas Desfavorables', data: dNeg, backgroundColor: THEME.rose }
                 ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { 
-                    legend: { 
-                        position: 'top', 
+                plugins: {
+                    legend: {
+                        position: 'top',
                         padding: 80,
-                        labels: { color: THEME.textMuted, usePointStyle: true } 
-                    } 
+                        labels: { color: THEME.textMuted, usePointStyle: true }
+                    }
                 },
                 scales: {
                     x: { stacked: true, grid: { display: false }, ticks: { color: THEME.textMuted } },
-                    y: { stacked: true, grid: { color: THEME.grid }, ticks: { color: THEME.textMuted }, grace: '15%' }
+                    y: {
+                        stacked: true,
+                        grid: { color: THEME.grid },
+                        ticks: { color: THEME.textMuted },
+                        grace: '15%',
+                        title: { display: true, text: 'Cantidad de Cuotas', color: THEME.textMuted, font: { size: 12, family: "'Syne', sans-serif" } }
+                    }
                 }
             }
         };
@@ -642,7 +652,7 @@
                         <div class="card-lbl">Cuota</div>
                         <div class="card-odds-value">${p.oddPrice.toFixed(2)}</div>
                     </div>
-                    ${isHero ? `<div class="prob-bars">${probRowHTML('L', p.probHome, 'home')}${probRowHTML('E', p.probDraw, 'draw')}${probRowHTML('V', p.probAway, 'away')}</div>` : ''}
+                    <div class="prob-bars">${probRowHTML('L', p.probHome, 'home')}${probRowHTML('E', p.probDraw, 'draw')}${probRowHTML('V', p.probAway, 'away')}</div>
                     <div class="card-risk-block">
                         <div class="card-lbl">Índice de Riesgo</div>
                         <div class="card-risk-value ${riskColorClass(p.benefitRiskIndex)}">${p.benefitRiskIndex >= 0 ? '+' : ''}${p.benefitRiskIndex.toFixed(3)}</div>
@@ -766,8 +776,9 @@
     }
 
     function setSignedStat(el, value, text) {
-        el.textContent = text;
-        el.className = `stat-value mono ${value > 0 ? 'neon' : value < 0 ? 'danger' : ''}`;
+        const rounded = parseFloat(value.toFixed(3));
+        el.textContent = rounded === 0 ? '0.000' : text;
+        el.className = `stat-value mono ${rounded > 0 ? 'neon' : rounded < 0 ? 'danger' : ''}`;
     }
 
     function showLoading() {
@@ -820,14 +831,14 @@
     function modelProbabilityForOutcome(p) { return isDrawOutcome(p.outcome) ? p.probDraw : (p.outcome === p.homeTeam ? p.probHome : p.probAway); }
     function avg(items, fn) { return items.length ? items.reduce((s, item) => s + fn(item), 0) / items.length : 0; }
     function fixed(value) { return Number(value.toFixed(3)); }
-    function riskColorClass(idx) { return idx >= 0 ? 'risk-pos' : (idx > -0.15 ? 'risk-neu' : 'risk-neg'); }
-    function riskBadgeClass(idx) { return idx > 0.3 ? 'pos-strong' : (idx > 0 ? 'pos' : (idx > -0.3 ? 'neu' : (idx > -0.5 ? 'neg' : 'neg-strong'))); }
+    function riskColorClass(idx) { return idx > 0.2 ? 'risk-pos' : (idx >= -0.2 ? 'risk-neu' : 'risk-neg'); }
+    function riskBadgeClass(idx) { return idx > 0.4 ? 'pos-strong' : (idx > 0.2 ? 'pos' : (idx >= -0.2 ? 'neu' : (idx >= -0.5 ? 'neg' : 'neg-strong'))); }
     function isDrawOutcome(outcome) { const o = (outcome || '').toLowerCase(); return o === 'draw' || o === 'empate' || o === 'x'; }
     function formatDate(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return str; } }
     function formatDateShort(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }); } catch { return str; } }
     function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 
-    window.handleImgErr = function(img, teamName) {
+    window.handleImgErr = function (img, teamName) {
         img.onerror = null;
         img.outerHTML = `<div class="team-logo-fallback">${esc(teamName.charAt(0))}</div>`;
     };

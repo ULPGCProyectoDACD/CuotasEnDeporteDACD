@@ -34,8 +34,11 @@ public class PredictionService {
     }
 
     private float[] extractMatchFeatures(String homeTeam, String awayTeam) {
-        float[] homeStats = statsManager.getTeamStats(homeTeam);
-        float[] awayStats = statsManager.getTeamStats(awayTeam);
+        String officialHome = org.ulpgc.dacd.business.control.TeamNameMapper.getOfficialName(homeTeam);
+        String officialAway = org.ulpgc.dacd.business.control.TeamNameMapper.getOfficialName(awayTeam);
+        
+        float[] homeStats = statsManager.getTeamStats(officialHome);
+        float[] awayStats = statsManager.getTeamStats(officialAway);
         return new float[]{
                 homeStats[0], awayStats[0],
                 homeStats[1], homeStats[2],

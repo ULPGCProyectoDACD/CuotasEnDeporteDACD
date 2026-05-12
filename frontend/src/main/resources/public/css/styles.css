@@ -860,7 +860,7 @@ h1 {
 .risk-neg  { color: var(--rose); }
 .risk-bad  { color: var(--rose); }
 
-.prob-bars { display: flex; flex-direction: column; gap: 7px; }
+.prob-bars { display: flex; flex-direction: column; gap: 7px; flex: 1; }
 
 .prob-row { display: flex; align-items: center; gap: 8px; }
 

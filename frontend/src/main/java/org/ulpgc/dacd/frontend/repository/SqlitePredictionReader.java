@@ -40,9 +40,10 @@ public class SqlitePredictionReader implements PredictionReader {
         StringBuilder sql = new StringBuilder(
                 "SELECT id, match_date, home_team, away_team, bookmaker, market, outcome, " +
                         "odd_price, prob_home, prob_draw, prob_away, benefit_risk_index, timestamp " +
-                        "FROM predictions WHERE 1=1 ");
+                        "FROM predictions WHERE match_date >= ? ");
 
         List<String> params = new ArrayList<>();
+        params.add(java.time.Instant.now().toString());
 
         if (team != null && !team.isBlank()) {
             sql.append("AND (home_team = ? OR away_team = ?) ");

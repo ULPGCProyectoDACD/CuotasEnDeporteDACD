@@ -47,6 +47,7 @@ public class TeamNameMapper {
         DICTIONARY.put("Elche", "Elche");
         DICTIONARY.put("CA Osasuna", "Osasuna");
         DICTIONARY.put("Osasuna", "Osasuna");
+        DICTIONARY.put("Celta", "Celta Vigo");
     }
 
     public static String getOfficialName(String apiName) {
