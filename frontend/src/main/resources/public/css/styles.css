@@ -1073,6 +1073,37 @@ td { padding: 0.78rem 1.25rem; vertical-align: middle; }
 .team-logo-fallback { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.08); color: var(--t2); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; font-family: 'Syne', sans-serif;}
 .card-team .team-logo-fallback { width: 20px; height: 20px; font-size: 11px; }
 
+/* Rank 1 (Hero Card) Enhancements */
+.rank-1 .card-match {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+.rank-1 .card-team {
+    flex-direction: column;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+.rank-1 .card-team .team-logo {
+    width: 64px;
+    height: 64px;
+}
+.rank-1 .card-team .team-logo-fallback {
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+}
+.rank-1 .card-vs {
+    font-size: 0.85rem;
+    color: var(--t2);
+    letter-spacing: 0.2em;
+    margin: 5px 0;
+}
+
 .date-cell {
     font-family: 'JetBrains Mono', monospace;
     color: var(--t2);
