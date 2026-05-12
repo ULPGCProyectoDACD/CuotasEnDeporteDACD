@@ -274,10 +274,11 @@
         if (!allPredictions.length) {
             showEmpty();
         } else {
+            const topLimit = currentView === 'team' ? 3 : TOP_N;
             updateStats(allPredictions);
             updateCharts(allPredictions);
-            renderTop5(matchGroups.slice(0, TOP_N));
-            renderTable(matchGroups.slice(TOP_N));
+            renderTop5(matchGroups.slice(0, topLimit));
+            renderTable(matchGroups.slice(topLimit));
 
             dom.resultCount.textContent = `${matchGroups.length} partidos · ${allPredictions.length} predicciones`;
             dom.top5Section.classList.remove('hidden');
@@ -336,9 +337,15 @@
         );
 
         const bookmakerRisk = avgEntries(predictions, p => p.bookmaker, p => p.benefitRiskIndex)
-            .sort((a, b) => b.value - a.value).slice(0, 10);
+            .sort((a, b) => b.value - a.value);
+        
+        // Mostrar los 5 mejores y los 5 peores para ver la realidad del mercado
+        const top5 = bookmakerRisk.slice(0, 5);
+        const bottom5 = bookmakerRisk.length > 5 ? bookmakerRisk.slice(-5) : [];
+        const combined = [...top5, ...bottom5].filter((v, i, a) => a.findIndex(t => t.label === v.label) === i);
+
         charts.primary = new Chart($('primary-chart'), horizontalBarConfig(
-            bookmakerRisk.map(e => e.label), bookmakerRisk.map(e => fixed(e.value)), 'Índice de Ventaja'
+            combined.map(e => e.label), combined.map(e => fixed(e.value)), 'Índice de Ventaja'
         ));
 
         const valueCnt = predictions.filter(p => p.benefitRiskIndex > 0).length;
@@ -530,13 +537,14 @@
 
     function renderTop5(groups) {
         dom.top5Grid.innerHTML = '';
+        dom.top5Grid.dataset.count = groups.length;
         groups.forEach((group, i) => {
             const rank = i + 1; const p = group.best;
             const extra = group.all.length - 1;
-            const isHero = rank === 1;
+            const isHero = rank === 1 || (groups.length === 2 && rank === 2);
 
             const card = document.createElement('div');
-            card.className = `top-card rank-${rank}`;
+            card.className = `top-card rank-${rank}${isHero ? ' hero-style' : ''}`;
             card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0');
 
             card.innerHTML = `

@@ -612,6 +612,18 @@ h1 {
 .top5-grid .top-card:nth-child(4) { grid-column: 2; grid-row: 2; }
 .top5-grid .top-card:nth-child(5) { grid-column: 3; grid-row: 2; }
 
+
+.top5-grid[data-count="1"] { grid-template-columns: 1fr; grid-template-rows: auto; }
+.top5-grid[data-count="1"] .top-card { grid-column: auto !important; grid-row: auto !important; }
+
+.top5-grid[data-count="2"] { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
+.top5-grid[data-count="2"] .top-card { grid-column: auto !important; grid-row: auto !important; }
+
+.top5-grid[data-count="3"] { grid-template-columns: 1.4fr 1fr; grid-template-rows: 1fr 1fr; }
+.top5-grid[data-count="3"] .top-card:nth-child(1) { grid-column: 1; grid-row: 1 / 3; }
+.top5-grid[data-count="3"] .top-card:nth-child(2) { grid-column: 2; grid-row: 1; }
+.top5-grid[data-count="3"] .top-card:nth-child(3) { grid-column: 2; grid-row: 2; }
+
 .top-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -657,12 +669,12 @@ h1 {
 .top-card:hover::after  { opacity: 1; }
 .top-card:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 
-.top-card.rank-1 {
+.top-card.hero-style {
     border-color: var(--amber-mid);
     background: linear-gradient(148deg, rgba(var(--amber-rgb), 0.065) 0%, var(--card) 48%);
 }
 
-.top-card.rank-1::before {
+.top-card.hero-style::before {
     background: linear-gradient(90deg, transparent 5%, var(--amber) 48%, rgba(var(--amber-rgb), 0.25) 100%);
     opacity: 1;
 }
@@ -683,7 +695,7 @@ h1 {
     letter-spacing: 0.06em;
 }
 
-.rank-1 .rank-number { color: var(--amber); font-size: 0.75rem; }
+.hero-style .rank-number { color: var(--amber); font-size: 0.75rem; }
 
 .rank-badge {
     font-family: 'JetBrains Mono', monospace;
@@ -721,7 +733,7 @@ h1 {
     padding-bottom: 2px;
 }
 
-.rank-1 .card-team { font-size: 0.94rem; }
+.hero-style .card-team { font-size: 0.94rem; }
 
 .card-vs {
     font-size: 0.54rem;
@@ -789,7 +801,7 @@ h1 {
     margin-top: auto;
 }
 
-.rank-1 .card-bottom {
+.hero-style .card-bottom {
     display: grid;
     grid-template-columns: 0.75fr 1.2fr 0.75fr;
     align-items: end;
@@ -815,11 +827,11 @@ h1 {
     letter-spacing: -0.025em;
 }
 
-.rank-1 .card-odds-value { font-size: 1.45rem; }
+.hero-style .card-odds-value { font-size: 1.45rem; }
 
 .card-risk-block { display: flex; flex-direction: column; align-items: flex-end; }
 
-.rank-1 .card-risk-block { align-items: flex-start; }
+.hero-style .card-risk-block { align-items: flex-start; }
 
 .card-risk-value {
     font-family: 'JetBrains Mono', monospace;
@@ -829,7 +841,7 @@ h1 {
     letter-spacing: -0.025em;
 }
 
-.rank-1 .card-risk-value { font-size: 1.1rem; }
+.hero-style .card-risk-value { font-size: 1.1rem; }
 
 .card-cta {
     font-family: 'JetBrains Mono', monospace;
@@ -1073,8 +1085,8 @@ td { padding: 0.78rem 1.25rem; vertical-align: middle; }
 .team-logo-fallback { width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,0.08); color: var(--t2); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: bold; font-family: 'Syne', sans-serif;}
 .card-team .team-logo-fallback { width: 20px; height: 20px; font-size: 11px; }
 
-/* Rank 1 (Hero Card) Enhancements */
-.rank-1 .card-match {
+/* Hero Card Enhancements (Class applied dynamically) */
+.hero-style .card-match {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1082,22 +1094,22 @@ td { padding: 0.78rem 1.25rem; vertical-align: middle; }
     margin-top: 0.5rem;
     margin-bottom: 1.5rem;
 }
-.rank-1 .card-team {
+.hero-style .card-team {
     flex-direction: column;
     gap: 10px;
     font-size: 1.25rem;
     font-weight: 800;
 }
-.rank-1 .card-team .team-logo {
+.hero-style .card-team .team-logo {
     width: 64px;
     height: 64px;
 }
-.rank-1 .card-team .team-logo-fallback {
+.hero-style .card-team .team-logo-fallback {
     width: 64px;
     height: 64px;
     font-size: 24px;
 }
-.rank-1 .card-vs {
+.hero-style .card-vs {
     font-size: 0.85rem;
     color: var(--t2);
     letter-spacing: 0.2em;
