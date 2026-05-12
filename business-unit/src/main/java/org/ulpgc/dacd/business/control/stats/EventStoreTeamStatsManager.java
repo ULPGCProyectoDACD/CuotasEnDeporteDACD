@@ -2,6 +2,7 @@ package org.ulpgc.dacd.business.control.stats;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.ulpgc.dacd.business.control.TeamNameMapper;
 import org.ulpgc.dacd.business.model.MatchStat;
 import org.ulpgc.dacd.business.model.ParsedMatch;
 
@@ -61,8 +62,16 @@ public class EventStoreTeamStatsManager implements TeamStatsManager {
         }
 
         Instant date = Instant.parse(json.get("date").getAsString());
-        String homeTeam = json.getAsJsonObject("homeTeam").get("name").getAsString();
-        String awayTeam = json.getAsJsonObject("awayTeam").get("name").getAsString();
+
+        JsonObject homeObj = json.getAsJsonObject("homeTeam");
+        JsonObject awayObj = json.getAsJsonObject("awayTeam");
+        
+        String homeTeam = homeObj.has("shortName") ? homeObj.get("shortName").getAsString() : homeObj.get("name").getAsString();
+        String awayTeam = awayObj.has("shortName") ? awayObj.get("shortName").getAsString() : awayObj.get("name").getAsString();
+
+        homeTeam = TeamNameMapper.getOfficialName(homeTeam);
+        awayTeam = TeamNameMapper.getOfficialName(awayTeam);
+
         int homeGoals = json.get("homeGoals").getAsInt();
         int awayGoals = json.get("awayGoals").getAsInt();
 
@@ -108,7 +117,8 @@ public class EventStoreTeamStatsManager implements TeamStatsManager {
 
     public float[] getTeamStats(String teamName) {
         if (!history.containsKey(teamName) || history.get(teamName).isEmpty()) {
-            throw new IllegalArgumentException("No se encontraron estadísticas para el equipo: " + teamName);
+            System.out.println("⚠️ [Stats] No hay histórico para '" + teamName + "'. Usando valores por defecto (0).");
+            return new float[]{0, 0, 0};
         }
 
         List<MatchStat> recentMatches = history.get(teamName);
