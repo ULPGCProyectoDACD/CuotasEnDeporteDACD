@@ -1,91 +1,92 @@
 (() => {
     'use strict';
 
-    
-    const API_BASE          = '';
-    const REFRESH_MS        = 30_000;
-    const PAGE_SIZE         = 15;     
-    const TOP_N             = 5;
-    const BOOKMAKER_CHART_N = 8;
+    const API_BASE = '';
+    const REFRESH_MS = 30_000;
+    const PAGE_SIZE = 15;
+    const TOP_N = 5;
 
-    
-    let currentView    = 'global';
-    let filtersData    = { teams: [], bookmakers: [] };
+    let currentView = 'global';
+    let filtersData = { teams: [], bookmakers: [] };
     let allPredictions = [];
-    let matchGroups    = [];   
-    let currentPage    = 1;
-    let refreshTimer   = null;
-    let donutChart     = null;
-    let barChart       = null;
-    let chartsReady    = false;
+    let matchGroups = [];
+    let currentPage = 1;
+    let refreshTimer = null;
+    let chartsReady = false;
+    let charts = { primary: null, secondary: null };
 
-    
+    const THEME = {
+        amber: '#f59e0b',
+        amberDim: 'rgba(245, 158, 11, 0.2)',
+        cyan: '#06b6d4',
+        cyanDim: 'rgba(6, 182, 212, 0.2)',
+        rose: '#f43f5e',
+        roseDim: 'rgba(244, 63, 94, 0.2)',
+        slate: '#94a3b8',
+        slateDim: 'rgba(148, 163, 184, 0.2)',
+        surface: 'rgba(10, 10, 19, 0.93)',
+        grid: 'rgba(255, 255, 255, 0.05)',
+        textMain: '#f0f0f7',
+        textMuted: '#6b6b8c'
+    };
+
     const $ = id => document.getElementById(id);
     const $q = sel => document.querySelector(sel);
 
     const dom = {
-        tabs:           document.querySelectorAll('.nav-tab'),
-        filterBar:      $('filter-bar'),
-        filterLabel:    $('filter-label'),
-        filterSelect:   $('filter-select'),
-        tableBody:      $('table-body'),
-        tableTitle:     $('table-title'),
-        tableRange:     $('table-range'),
-        resultCount:    $('result-count'),
+        tabs: document.querySelectorAll('.module-card'),
+        filterBar: $('filter-bar'),
+        filterLabel: $('filter-label'),
+        filterSelect: $('filter-select'),
+        filterTrigger: $('filter-trigger'),
+        filterTriggerText: $('filter-trigger-text'),
+        filterMenu: $('filter-menu'),
+        tableBody: $('table-body'),
+        tableTitle: $('table-title'),
+        tableRange: $('table-range'),
+        resultCount: $('result-count'),
         tableContainer: $('table-container'),
-        emptyState:     $('empty-state'),
-        top5Section:    $('top5-section'),
-        top5Grid:       $('top5-grid'),
-        statTotal:      $q('#stat-total     .stat-value'),
-        statValueBets:  $q('#stat-value-bets .stat-value'),
-        statBestIndex:  $q('#stat-best-index .stat-value'),
-        statAvgIndex:   $q('#stat-avg-index  .stat-value'),
-        statusDot:      $('status-dot'),
-        statusText:     $('status-text'),
-        lastUpdate:     $('last-update'),
-        pagination:     $('pagination-controls'),
-        btnPrev:        $('btn-prev-page'),
-        btnNext:        $('btn-next-page'),
-        pageInfo:       $('page-info'),
-        donutCenter:    $('donut-center'),
-        barTitle:       $('bar-chart-title'),
-        barSubtitle:    $('bar-chart-subtitle'),
-        oddsModal:      $('odds-modal'),
-        modalClose:     $('modal-close'),
-        modalMatchTitle:$('modal-match-title'),
-        modalOddsList:  $('modal-odds-list'),
+        emptyState: $('empty-state'),
+        top5Section: $('top5-section'),
+        top5Grid: $('top5-grid'),
+        statTotal: $q('#stat-total .stat-value'),
+        statValueBets: $q('#stat-value-bets .stat-value'),
+        statBestIndex: $q('#stat-best-index .stat-value'),
+        statAvgIndex: $q('#stat-avg-index .stat-value'),
+        statusDot: $('status-dot'),
+        statusText: $('status-text'),
+        lastUpdate: $('last-update'),
+        pagination: $('pagination-controls'),
+        btnPrev: $('btn-prev-page'),
+        btnNext: $('btn-next-page'),
+        pageInfo: $('page-info'),
+        primaryTitle: $('primary-chart-title'),
+        primarySubtitle: $('primary-chart-subtitle'),
+        secondaryTitle: $('secondary-chart-title'),
+        secondarySubtitle: $('secondary-chart-subtitle'),
+        oddsModal: $('odds-modal'),
+        modalClose: $('modal-close'),
+        modalMatchTitle: $('modal-match-title'),
+        modalOddsList: $('modal-odds-list'),
     };
 
-    
-    
     const SVG = {
-        calendar: `<svg class="meta-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="3" width="14" height="12" rx="2"/>
-            <path d="M1 7h14M5 1v4M11 1v4"/>
-        </svg>`,
-        building: `<svg class="meta-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor"
-            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2 14h12M3 14V7m10 7V7M1 7h14L8 2 1 7z"/>
-            <rect x="6" y="10" width="4" height="4" stroke-width="1.25"/>
-        </svg>`,
-        calendarDate: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
-            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-            style="width:11px;height:11px;flex-shrink:0;stroke:var(--t3)">
-            <rect x="1" y="3" width="14" height="12" rx="2"/>
-            <path d="M1 7h14M5 1v4M11 1v4"/>
-        </svg>`,
+        calendar: `<svg class="meta-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="14" height="12" rx="2"/><path d="M1 7h14M5 1v4M11 1v4"/></svg>`,
+        building: `<svg class="meta-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14h12M3 14V7m10 7V7M1 7h14L8 2 1 7z"/><rect x="6" y="10" width="4" height="4" stroke-width="1.25"/></svg>`,
+        calendarDate: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;flex-shrink:0;stroke:var(--t3)"><rect x="1" y="3" width="14" height="12" rx="2"/><path d="M1 7h14M5 1v4M11 1v4"/></svg>`,
     };
 
-    
     async function init() {
+        document.body.dataset.view = currentView;
         bindNavigation();
         bindFilterChange();
+        bindCustomSelect();
         bindPagination();
-        bindModal();   
+        bindModal();
+        animateInitialLayout();
 
         waitForChartJs(() => {
-            initCharts();
+            initChartDefaults();
             chartsReady = true;
             if (allPredictions.length) updateCharts(allPredictions);
         });
@@ -96,278 +97,423 @@
     }
 
     function waitForChartJs(cb) {
-        if (typeof Chart !== 'undefined') { cb(); return; }
+        const isReady = () => {
+            try {
+                return typeof Chart !== 'undefined';
+            } catch (err) {
+                return false;
+            }
+        };
+
+        if (isReady()) return cb();
         const t = setInterval(() => {
-            if (typeof Chart !== 'undefined') { clearInterval(t); cb(); }
+            if (isReady()) { clearInterval(t); cb(); }
         }, 50);
     }
 
-    
-    function initCharts() {
-        Chart.defaults.color = '#38384e';
+    function initChartDefaults() {
+        Chart.defaults.color = THEME.textMuted;
         Chart.defaults.font.family = "'JetBrains Mono', monospace";
+        Chart.defaults.plugins.tooltip.backgroundColor = THEME.surface;
+        Chart.defaults.plugins.tooltip.borderColor = 'rgba(255,255,255,0.08)';
+        Chart.defaults.plugins.tooltip.borderWidth = 1;
+        Chart.defaults.plugins.tooltip.padding = 10;
+        Chart.defaults.plugins.tooltip.titleFont = { family: "'Syne', sans-serif", size: 14, weight: '700' };
+        Chart.defaults.plugins.tooltip.bodyFont = { family: "'JetBrains Mono', monospace", size: 12 };
 
-        
-        const dCtx = $('donut-chart').getContext('2d');
-        donutChart = new Chart(dCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Value Bets', 'Sin valor'],
-                datasets: [{
-                    data: [0, 100],
-                    backgroundColor: ['rgba(0,255,157,0.85)', 'rgba(168,85,247,0.25)'],
-                    borderColor:     ['rgba(0,255,157,0.4)',  'rgba(168,85,247,0.1)'],
-                    borderWidth: 1,
-                    hoverBackgroundColor: ['rgba(0,255,157,1)', 'rgba(168,85,247,0.45)'],
-                    hoverBorderColor: 'transparent',
-                }],
-            },
-            options: {
-                cutout: '74%',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(10,10,20,0.95)',
-                        titleColor: '#00ff9d',
-                        bodyColor: '#7878a0',
-                        borderColor: 'rgba(0,255,157,0.18)',
-                        borderWidth: 1,
-                        padding: 10,
-                        callbacks: {
-                            label: ctx => `  ${ctx.label}: ${ctx.parsed.toFixed(1)}%`,
-                        },
-                    },
-                },
-                animation: { duration: 900, easing: 'easeInOutQuart' },
-            },
-        });
-
-        
-        const bCtx = $('bar-chart').getContext('2d');
-        barChart = new Chart(bCtx, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    data: [],
-                    backgroundColor: [],
-                    borderColor: [],
-                    borderWidth: 1,
-                    borderRadius: 3,
-                }],
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(10,10,20,0.95)',
-                        titleColor: '#eeeef5',
-                        bodyColor: '#7878a0',
-                        borderColor: 'rgba(255,255,255,0.06)',
-                        borderWidth: 1,
-                        padding: 10,
-                        callbacks: {
-                            label: ctx => `  Índice medio: ${ctx.parsed.x >= 0 ? '+' : ''}${ctx.parsed.x.toFixed(4)}`,
-                        },
-                    },
-                },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(255,255,255,0.04)', drawTicks: false },
-                        ticks: {
-                            color: '#38384e',
-                            font: { family: "'JetBrains Mono', monospace", size: 10 },
-                            callback: v => (v >= 0 ? '+' : '') + v.toFixed(2),
-                        },
-                        border: { color: 'rgba(255,255,255,0.05)', dash: [3,3] },
-                    },
-                    y: {
-                        grid: { display: false },
-                        ticks: {
-                            color: '#7878a0',
-                            font: { family: "'DM Sans', sans-serif", size: 11 },
-                        },
-                        border: { color: 'rgba(255,255,255,0.05)' },
-                    },
-                },
-                animation: { duration: 700 },
-            },
-        });
+        const centerTextPlugin = {
+            id: 'centerText',
+            beforeDraw: function(chart) {
+                if (chart.config.options.elements && chart.config.options.elements.center) {
+                    const ctx = chart.ctx;
+                    const centerConfig = chart.config.options.elements.center;
+                    ctx.save();
+                    ctx.font = "bold 46px 'Syne', sans-serif";
+                    ctx.fillStyle = centerConfig.color || THEME.amber;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                    const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                    ctx.fillText(centerConfig.text, centerX, centerY - 4);
+                    
+                    if (centerConfig.subText) {
+                        ctx.font = "600 12px 'Syne', sans-serif";
+                        ctx.fillStyle = THEME.textMuted;
+                        ctx.fillText(centerConfig.subText, centerX, centerY + 28);
+                    }
+                    ctx.restore();
+                }
+            }
+        };
+        Chart.register(centerTextPlugin);
     }
 
-    
-    function updateCharts(predictions) {
-        if (!chartsReady) return;
-
-        
-        const total    = predictions.length;
-        const valueCnt = predictions.filter(p => p.benefitRiskIndex > 0).length;
-        const valuePct = total > 0 ? (valueCnt / total) * 100 : 0;
-
-        donutChart.data.datasets[0].data = [valuePct, 100 - valuePct];
-        donutChart.update();
-        const pctEl = dom.donutCenter?.querySelector('.donut-pct');
-        if (pctEl) pctEl.textContent = `${Math.round(valuePct)}%`;
-
-        
-        let groupFn, titleText, subtitleText;
-
-        if (currentView === 'bookmaker') {
-            
-            groupFn      = p => `${p.homeTeam} vs ${p.awayTeam}`;
-            titleText    = 'Partidos';
-            subtitleText = 'Índice de riesgo medio por partido';
-        } else if (currentView === 'team') {
-            
-            groupFn      = p => p.bookmaker;
-            titleText    = 'Casas de Apuestas';
-            subtitleText = 'Índice de riesgo por operador (equipo seleccionado)';
-        } else {
-            
-            groupFn      = p => p.bookmaker;
-            titleText    = 'Casas de Apuestas';
-            subtitleText = 'Índice de riesgo medio por operador';
-        }
-
-        if (dom.barTitle)    dom.barTitle.textContent    = titleText;
-        if (dom.barSubtitle) dom.barSubtitle.textContent = subtitleText;
-
-        const bmap = {};
-        predictions.forEach(p => {
-            const key = groupFn(p);
-            if (!bmap[key]) bmap[key] = { sum: 0, n: 0 };
-            bmap[key].sum += p.benefitRiskIndex;
-            bmap[key].n++;
-        });
-
-        const entries = Object.entries(bmap)
-            .map(([name, { sum, n }]) => ({ name, avg: sum / n }))
-            .sort((a, b) => b.avg - a.avg)
-            .slice(0, BOOKMAKER_CHART_N);
-
-        barChart.data.labels                      = entries.map(e => e.name);
-        barChart.data.datasets[0].data            = entries.map(e => +e.avg.toFixed(4));
-        barChart.data.datasets[0].backgroundColor = entries.map(e => e.avg > 0 ? 'rgba(0,255,157,0.65)'  : 'rgba(168,85,247,0.55)');
-        barChart.data.datasets[0].borderColor     = entries.map(e => e.avg > 0 ? 'rgba(0,255,157,0.9)'   : 'rgba(168,85,247,0.85)');
-        barChart.update();
-    }
-
-    
     function bindNavigation() {
-        dom.tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const v = tab.dataset.view;
-                if (v === currentView) return;
-                switchView(v);
+        dom.tabs.forEach(item => {
+            item.addEventListener('click', () => {
+                const view = item.dataset.view;
+                if (!view || view === currentView) return;
+                switchView(view);
             });
         });
     }
 
     function switchView(view) {
         currentView = view;
-        dom.tabs.forEach(t => t.classList.toggle('active', t.dataset.view === view));
+        currentPage = 1;
+        syncActiveView();
+        document.body.dataset.view = view;
 
         const isFiltered = view !== 'global';
         dom.filterBar.classList.toggle('hidden', !isFiltered);
         if (isFiltered) populateFilterSelect(view);
+        if (!isFiltered) {
+            dom.filterSelect.value = '';
+            syncCustomSelect();
+        }
 
-        const titles = {
-            global:    'Ranking Global de Riesgo',
-            team:      'Análisis por Equipo',
-            bookmaker: 'Análisis por Casa de Apuestas',
-        };
-        if (dom.tableTitle) dom.tableTitle.textContent = titles[view] ?? titles.global;
-
-        currentPage = 1;
+        updateViewTitle();
         loadPredictions();
     }
 
-    
+    function syncActiveView() {
+        dom.tabs.forEach(card => card.classList.toggle('active', card.dataset.view === currentView));
+        animateViewSwitch();
+    }
+
+    function updateViewTitle() {
+        const selected = dom.filterSelect.value;
+        const titles = {
+            global: 'Ranking Global de Riesgo',
+            team: selected ? `Análisis de ${selected}` : 'Análisis por Equipo',
+            bookmaker: selected ? `Análisis de ${selected}` : 'Análisis por Casa de Apuestas',
+        };
+        dom.tableTitle.textContent = titles[currentView] || titles.global;
+    }
+
     async function loadFilters() {
         try {
             const res = await fetch(`${API_BASE}/api/filters`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             filtersData = await res.json();
         } catch (err) {
-            console.error('[Filters]', err);
-            filtersData = { teams: [], bookmakers: [] };
+            filtersData = { teams: ['Real Madrid', 'FC Barcelona', 'Sevilla', 'Athletic Club'], bookmakers: ['Bet365', 'Bwin', '1xBet'] };
         }
     }
 
     function populateFilterSelect(view) {
+        const current = dom.filterSelect.value;
         const items = view === 'team' ? filtersData.teams : filtersData.bookmakers;
         dom.filterLabel.textContent = view === 'team' ? 'Equipo:' : 'Casa de Apuestas:';
-        dom.filterSelect.innerHTML = `<option value="">${view === 'team' ? '— Todos los equipos —' : '— Todas las casas —'}</option>`;
+        dom.filterSelect.innerHTML = '';
         items.forEach(item => {
             const opt = Object.assign(document.createElement('option'), { value: item, textContent: item });
             dom.filterSelect.appendChild(opt);
         });
+        dom.filterSelect.value = items.includes(current) ? current : (items[0] || '');
+        renderCustomOptions(items);
+        syncCustomSelect();
     }
 
     function bindFilterChange() {
-        dom.filterSelect.addEventListener('change', () => { currentPage = 1; loadPredictions(); });
+        dom.filterSelect.addEventListener('change', () => {
+            currentPage = 1;
+            syncCustomSelect();
+            updateViewTitle();
+            loadPredictions();
+        });
     }
 
-    
+    function bindCustomSelect() {
+        dom.filterTrigger?.addEventListener('click', () => setCustomSelectOpen(dom.filterTrigger.getAttribute('aria-expanded') !== 'true'));
+        document.addEventListener('click', e => { if (!e.target.closest('.select-wrapper')) setCustomSelectOpen(false); });
+    }
+
+    function renderCustomOptions(items) {
+        if (!dom.filterMenu) return;
+        dom.filterMenu.innerHTML = '';
+        items.forEach((item, i) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'custom-select-option';
+            option.dataset.value = item;
+            option.innerHTML = `<span class="custom-option-index mono">${String(i + 1).padStart(2, '0')}</span><span class="custom-option-label">${esc(item)}</span>`;
+            option.addEventListener('click', () => { dom.filterSelect.value = item; setCustomSelectOpen(false); dom.filterSelect.dispatchEvent(new Event('change')); });
+            dom.filterMenu.appendChild(option);
+        });
+    }
+
+    function syncCustomSelect() {
+        if (!dom.filterTriggerText) return;
+        const selected = dom.filterSelect.value;
+        dom.filterTriggerText.textContent = selected || 'Selecciona una opción';
+        dom.filterMenu?.querySelectorAll('.custom-select-option').forEach(opt => opt.classList.toggle('selected', opt.dataset.value === selected));
+    }
+
+    function setCustomSelectOpen(open) {
+        dom.filterTrigger?.setAttribute('aria-expanded', String(open));
+        dom.filterMenu?.classList.toggle('hidden', !open);
+        dom.filterTrigger?.classList.toggle('open', open);
+    }
+
     async function loadPredictions(isRefresh = false) {
         if (!isRefresh) showLoading();
 
         try {
             const res = await fetch(buildUrl());
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
             allPredictions = await res.json();
-            matchGroups    = groupByMatch(allPredictions);   
             setStatus(true);
-
-            if (allPredictions.length === 0) {
-                showEmpty();
-            } else {
-                updateStats(allPredictions);
-                updateCharts(allPredictions);   
-
-                
-                renderTop5(matchGroups.slice(0, TOP_N));
-                renderTable(matchGroups.slice(TOP_N));
-
-                dom.resultCount.textContent =
-                    `${matchGroups.length} partidos · ${allPredictions.length} predicciones`;
-
-                dom.top5Section.classList.remove('hidden');
-                dom.emptyState.classList.add('hidden');
-            }
-
-            const now = new Date();
-            dom.lastUpdate.textContent = `Actualizado: ${now.toLocaleTimeString('es-ES')}`;
-
         } catch (err) {
-            console.error('[Predictions]', err);
+            allPredictions = generateMockData(currentView, dom.filterSelect.value);
             setStatus(false);
-            showEmpty();
         }
+
+        matchGroups = groupByMatch(allPredictions);
+
+        if (!allPredictions.length) {
+            showEmpty();
+        } else {
+            updateStats(allPredictions);
+            updateCharts(allPredictions);
+            renderTop5(matchGroups.slice(0, TOP_N));
+            renderTable(matchGroups.slice(TOP_N));
+
+            dom.resultCount.textContent = `${matchGroups.length} partidos · ${allPredictions.length} predicciones`;
+            dom.top5Section.classList.remove('hidden');
+            dom.emptyState.classList.add('hidden');
+            if (!isRefresh) animateDataBlocks();
+        }
+
+        dom.lastUpdate.textContent = `Actualizado: ${new Date().toLocaleTimeString('es-ES')}`;
     }
 
     function buildUrl() {
-        const sel = dom.filterSelect.value;
+        const selected = dom.filterSelect.value;
         let url = `${API_BASE}/api/predictions`;
-        if (currentView === 'team'      && sel) url += `?team=${encodeURIComponent(sel)}`;
-        if (currentView === 'bookmaker' && sel) url += `?bookmaker=${encodeURIComponent(sel)}`;
+        if (currentView === 'team' && selected) url += `?team=${encodeURIComponent(selected)}`;
+        if (currentView === 'bookmaker' && selected) url += `?bookmaker=${encodeURIComponent(selected)}`;
         return url;
     }
 
-    
-    
-    
-    
+    function updateStats(predictions) {
+        const total = predictions.length;
+        const valCnt = predictions.filter(p => p.benefitRiskIndex > 0).length;
+        const best = total ? Math.max(...predictions.map(p => p.benefitRiskIndex)) : 0;
+        const avgVal = total ? predictions.reduce((s, p) => s + p.benefitRiskIndex, 0) / total : 0;
+        const sign = v => (v >= 0 ? '+' : '');
+
+        countUp(dom.statTotal, total, 0);
+        countUp(dom.statValueBets, valCnt, 0);
+        setSignedStat(dom.statBestIndex, best, sign(best) + best.toFixed(3));
+        setSignedStat(dom.statAvgIndex, avgVal, sign(avgVal) + avgVal.toFixed(3));
+    }
+
+    function updateCharts(predictions) {
+        if (!chartsReady) return;
+        destroyCharts();
+
+        if (currentView === 'global') renderGlobalCharts(predictions);
+        else if (currentView === 'team') renderTeamCharts(predictions);
+        else if (currentView === 'bookmaker') renderBookmakerCharts(predictions);
+    }
+
+    function getRiskColor(idx) {
+        if (idx > 0) return THEME.amber;
+        if (idx > -0.15) return THEME.slate;
+        return THEME.rose;
+    }
+
+    function setChartCopy(pT, pS, sT, sS) {
+        dom.primaryTitle.textContent = pT; dom.primarySubtitle.textContent = pS;
+        dom.secondaryTitle.textContent = sT; dom.secondarySubtitle.textContent = sS;
+    }
+
+    function renderGlobalCharts(predictions) {
+        setChartCopy(
+            'Rentabilidad Promedio por Casa', 'Índice matemático del mercado (Dorado = Ventaja a favor)',
+            'Distribución de Oportunidades', 'Volumen de Value Bets detectadas vs Cuotas sin valor'
+        );
+
+        const bookmakerRisk = avgEntries(predictions, p => p.bookmaker, p => p.benefitRiskIndex)
+            .sort((a, b) => b.value - a.value).slice(0, 10);
+        charts.primary = new Chart($('primary-chart'), horizontalBarConfig(
+            bookmakerRisk.map(e => e.label), bookmakerRisk.map(e => fixed(e.value)), 'Índice de Ventaja'
+        ));
+
+        const valueCnt = predictions.filter(p => p.benefitRiskIndex > 0).length;
+        const total = predictions.length;
+        const pct = total > 0 ? Math.round((valueCnt / total) * 100) : 0;
+        charts.secondary = new Chart($('secondary-chart'), doughnutConfig(
+            ['Value Bets', 'Mercado Estándar'], [valueCnt, total - valueCnt], [THEME.amber, THEME.slate],
+            `${pct}%`, 'VALUE BETS'
+        ));
+    }
+
+    function renderTeamCharts(predictions) {
+        const team = dom.filterSelect.value || 'Seleccionado';
+        setChartCopy(
+            'Evolución del Value (Próximos Partidos)', 'Tendencia del índice de ventaja para los siguientes cruces',
+            'Desviación Probabilística del Modelo', 'Comparativa: Algoritmo predictivo vs Probabilidad Implícita de la Casa'
+        );
+
+        const byDate = [...predictions].sort((a,b) => new Date(a.matchDate) - new Date(b.matchDate));
+        const matches = avgEntries(byDate, p => 'vs ' + rivalName(p, team), p => p.benefitRiskIndex).slice(0, 15);
+        charts.primary = new Chart($('primary-chart'), lineConfig(matches.map(m=>m.label), matches.map(m=>fixed(m.value))));
+
+        const getProbs = (outcomeStr) => {
+            const preds = predictions.filter(p => {
+                if(outcomeStr === 'E') return isDrawOutcome(p.outcome);
+                if(outcomeStr === 'L') return p.outcome === p.homeTeam;
+                return p.outcome === p.awayTeam;
+            });
+            if(!preds.length) return { mod: 0, casa: 0 };
+            return {
+                mod: avg(preds, p => modelProbabilityForOutcome(p)) * 100,
+                casa: avg(preds, p => (1/p.oddPrice)) * 100
+            };
+        };
+
+        const local = getProbs('L'), empate = getProbs('E'), visitante = getProbs('V');
+        charts.secondary = new Chart($('secondary-chart'), groupedBarConfig(
+            ['Local', 'Empate', 'Visitante'],
+            [fixed(local.mod), fixed(empate.mod), fixed(visitante.mod)],
+            [fixed(local.casa), fixed(empate.casa), fixed(visitante.casa)]
+        ));
+    }
+
+    function renderBookmakerCharts(predictions) {
+        setChartCopy(
+            'Top 10 Encuentros de Alto Valor', 'Partidos que ofrecen el mayor margen matemático',
+            'Distribución de Calidad por Resultado', 'Volumen de pronósticos 1X2 categorizados por su rentabilidad'
+        );
+
+        const byMatch = avgEntries(predictions, p => matchLabel(p), p => p.benefitRiskIndex)
+            .sort((a, b) => b.value - a.value).slice(0, 10);
+        charts.primary = new Chart($('primary-chart'), horizontalBarConfig(
+            byMatch.map(e => e.label), byMatch.map(e => fixed(e.value)), 'Margen a Favor'
+        ));
+
+        const stackData = (oStr) => {
+            const preds = predictions.filter(p => (oStr === 'E' ? isDrawOutcome(p.outcome) : (oStr === 'L' ? p.outcome === p.homeTeam : p.outcome === p.awayTeam)));
+            return {
+                pos: preds.filter(p => p.benefitRiskIndex > 0).length,
+                neu: preds.filter(p => p.benefitRiskIndex <= 0 && p.benefitRiskIndex > -0.15).length,
+                neg: preds.filter(p => p.benefitRiskIndex <= -0.15).length
+            };
+        };
+        const dL = stackData('L'), dE = stackData('E'), dV = stackData('V');
+
+        charts.secondary = new Chart($('secondary-chart'), stackedBarConfig(
+            ['Victoria Local', 'Empate', 'Victoria Visitante'],
+            [dL.pos, dE.pos, dV.pos], [dL.neu, dE.neu, dV.neu], [dL.neg, dE.neg, dV.neg]
+        ));
+    }
+
+    function destroyCharts() {
+        Object.keys(charts).forEach(key => {
+            if (charts[key]) charts[key].destroy();
+            charts[key] = null;
+        });
+    }
+
+
+    function lineConfig(labels, data) {
+        return {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Índice Riesgo', data,
+                    borderColor: THEME.amber, backgroundColor: THEME.amberDim,
+                    fill: true, tension: 0.3, pointBackgroundColor: data.map(v => getRiskColor(v))
+                }]
+            },
+            options: axisOptions('x', 'Riesgo', true)
+        };
+    }
+
+    function groupedBarConfig(labels, dataMod, dataCasa) {
+        return {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Modelo de IA (%)', data: dataMod, backgroundColor: THEME.amber, borderRadius: 3 },
+                    { label: 'Casa de Apuestas (%)', data: dataCasa, backgroundColor: THEME.slate, borderRadius: 3 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { color: THEME.textMuted, usePointStyle: true } } },
+                scales: { x: { grid: { display: false }, ticks: { color: THEME.textMuted } }, y: { grid: { color: THEME.grid }, ticks: { color: THEME.textMuted } } }
+            }
+        };
+    }
+
+    function stackedBarConfig(labels, dPos, dNeu, dNeg) {
+        return {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Value Bet', data: dPos, backgroundColor: THEME.amber },
+                    { label: 'Riesgo Neutro', data: dNeu, backgroundColor: THEME.slate },
+                    { label: 'Mala Cuota', data: dNeg, backgroundColor: THEME.rose }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', labels: { color: THEME.textMuted, usePointStyle: true } } },
+                scales: {
+                    x: { stacked: true, grid: { display: false }, ticks: { color: THEME.textMuted } },
+                    y: { stacked: true, grid: { color: THEME.grid }, ticks: { color: THEME.textMuted } }
+                }
+            }
+        };
+    }
+
+    function horizontalBarConfig(labels, data, label) {
+        return {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label, data,
+                    backgroundColor: data.map(v => v >= 0 ? THEME.amber : THEME.rose),
+                    borderRadius: 4,
+                }],
+            },
+            options: axisOptions('y', label, true),
+        };
+    }
+
+    function doughnutConfig(labels, data, colors, centerText, centerSubText) {
+        return {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: THEME.surface, borderWidth: 2 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '76%',
+                plugins: { legend: { position: 'bottom', labels: { color: THEME.textMuted, usePointStyle: true } } },
+                elements: { center: { text: centerText, subText: centerSubText, color: THEME.amber } }
+            }
+        };
+    }
+
+    function axisOptions(indexAxis, label, signed) {
+        return {
+            indexAxis, responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: THEME.grid }, ticks: { color: THEME.textMuted } },
+                y: { grid: { color: indexAxis === 'y' ? 'transparent' : THEME.grid }, ticks: { color: THEME.textMuted } },
+            }
+        };
+    }
+
     function groupByMatch(predictions) {
         const map = {};
         predictions.forEach(p => {
-            
             const day = p.matchDate ? p.matchDate.slice(0, 10) : '';
             const key = `${p.homeTeam}|${p.awayTeam}|${day}`;
             if (!map[key]) map[key] = [];
@@ -382,26 +528,16 @@
             .sort((a, b) => b.best.benefitRiskIndex - a.best.benefitRiskIndex);
     }
 
-    
-    
     function renderTop5(groups) {
         dom.top5Grid.innerHTML = '';
-
         groups.forEach((group, i) => {
-            const rank   = i + 1;
-            const p      = group.best;
+            const rank = i + 1; const p = group.best;
+            const extra = group.all.length - 1;
             const isHero = rank === 1;
-            const sign   = p.benefitRiskIndex >= 0 ? '+' : '';
-            const rCls   = riskColorClass(p.benefitRiskIndex);
-            const isDraw = isDrawOutcome(p.outcome);
-            const extra  = group.all.length - 1;   
 
             const card = document.createElement('div');
             card.className = `top-card rank-${rank}`;
-            card.setAttribute('role', 'button');
-            card.setAttribute('tabindex', '0');
-            card.setAttribute('aria-label',
-                `${p.homeTeam} vs ${p.awayTeam}${extra > 0 ? `, ${extra + 1} cuotas disponibles` : ''}`);
+            card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0');
 
             card.innerHTML = `
                 <div class="card-rank">
@@ -409,378 +545,199 @@
                     ${isHero ? '<span class="rank-badge">MEJOR CUOTA</span>' : ''}
                     ${extra > 0 ? `<span class="more-badge">${extra + 1} casas</span>` : ''}
                 </div>
-
                 <div class="card-match">
                     <div class="card-team">${esc(p.homeTeam)}</div>
                     <div class="card-vs">vs</div>
                     <div class="card-team">${esc(p.awayTeam)}</div>
                 </div>
-
                 <div class="card-meta">
-                    <span class="card-meta-item">
-                        ${SVG.calendar} ${formatDate(p.matchDate)}
-                    </span>
-                    <span class="card-meta-item">
-                        ${SVG.building} ${esc(p.bookmaker)}
-                    </span>
+                    <span class="card-meta-item">${SVG.calendar} ${formatDate(p.matchDate)}</span>
+                    <span class="card-meta-item">${SVG.building} ${esc(p.bookmaker)}</span>
                 </div>
-
-                <span class="card-outcome ${isDraw ? 'draw' : ''}">
-                    ${isDraw ? 'Empate' : esc(p.outcome)}
-                </span>
-
+                <span class="card-outcome ${isDrawOutcome(p.outcome) ? 'draw' : ''}">${isDrawOutcome(p.outcome) ? 'Empate' : esc(p.outcome)}</span>
                 <div class="card-bottom">
                     <div class="card-odds-block">
                         <div class="card-lbl">Cuota</div>
                         <div class="card-odds-value">${p.oddPrice.toFixed(2)}</div>
                     </div>
-
-                    ${isHero ? probBarsHTML(p) : ''}
-
+                    ${isHero ? `<div class="prob-bars">${probRowHTML('L', p.probHome, 'home')}${probRowHTML('E', p.probDraw, 'draw')}${probRowHTML('V', p.probAway, 'away')}</div>` : ''}
                     <div class="card-risk-block">
-                        
                         <div class="card-lbl">Índice de Riesgo</div>
-                        <div class="card-risk-value ${rCls}">${sign}${p.benefitRiskIndex.toFixed(3)}</div>
+                        <div class="card-risk-value ${riskColorClass(p.benefitRiskIndex)}">${p.benefitRiskIndex >= 0 ? '+' : ''}${p.benefitRiskIndex.toFixed(3)}</div>
                     </div>
                 </div>
-                ${extra > 0 ? '<div class="card-cta">Ver todas las cuotas →</div>' : ''}`;
+                ${extra > 0 ? '<div class="card-cta">Ver todas las cuotas &rarr;</div>' : ''}`;
 
             card.addEventListener('click', () => openModal(group));
-            card.addEventListener('keydown', e => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(group); }
-            });
-
             dom.top5Grid.appendChild(card);
         });
     }
 
-    function probBarsHTML(p) {
-        return `
-            <div class="prob-bars">
-                ${probRowHTML('L', p.probHome, 'home')}
-                ${probRowHTML('E', p.probDraw, 'draw')}
-                ${probRowHTML('V', p.probAway, 'away')}
-            </div>`;
-    }
-
-    function probRowHTML(lbl, val, cls) {
-        const pct = (val * 100).toFixed(1);
-        return `
-            <div class="prob-row">
-                <span class="prob-lbl">${lbl}</span>
-                <div class="prob-track">
-                    <div class="prob-fill ${cls}" style="width:${pct}%"></div>
-                </div>
-                <span class="prob-val">${pct}%</span>
-            </div>`;
-    }
-
-    
-    
-    
     function renderTable(groups) {
         dom.tableBody.innerHTML = '';
-
-        if (!groups.length) {
-            dom.tableContainer.classList.add('hidden');
-            return;
-        }
-
+        if (!groups.length) return dom.tableContainer.classList.add('hidden');
         dom.tableContainer.classList.remove('hidden');
 
-        const total      = groups.length;
-        const totalPages = Math.ceil(total / PAGE_SIZE);
-        if (currentPage < 1)          currentPage = 1;
-        if (currentPage > totalPages) currentPage = totalPages;
+        const totalPages = Math.ceil(groups.length / PAGE_SIZE);
+        currentPage = Math.max(1, Math.min(currentPage, totalPages));
+        const items = groups.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-        const start = (currentPage - 1) * PAGE_SIZE;
-        const end   = Math.min(start + PAGE_SIZE, total);
-        const items = groups.slice(start, end);
-
-        dom.tableRange.textContent = `${start + 1}–${end} de ${total} partidos`;
+        dom.tableRange.textContent = `${((currentPage - 1) * PAGE_SIZE) + 1}-${((currentPage - 1) * PAGE_SIZE) + items.length} de ${groups.length} partidos`;
 
         items.forEach((group, i) => {
-            const globalRank = TOP_N + start + i + 1;
-            const p     = group.best;
-            const sign  = p.benefitRiskIndex >= 0 ? '+' : '';
-            const bCls  = riskBadgeClass(p.benefitRiskIndex);
-            const isDraw = isDrawOutcome(p.outcome);
+            const p = group.best;
+            const globalRank = TOP_N + ((currentPage - 1) * PAGE_SIZE) + i + 1;
             const extra = group.all.length - 1;
 
             const tr = document.createElement('tr');
-
             tr.innerHTML = `
                 <td class="rank-cell">${globalRank}</td>
-                <td>
-                    <div class="match-cell">
-                        <span class="match-home">${esc(p.homeTeam)}</span>
-                        <span class="match-vs">vs</span>
-                        <span class="match-away">${esc(p.awayTeam)}</span>
-                    </div>
-                </td>
+                <td><div class="match-cell"><span class="match-home">${esc(p.homeTeam)}</span><span class="match-vs">vs</span><span class="match-away">${esc(p.awayTeam)}</span></div></td>
                 <td class="date-cell">${formatDateShort(p.matchDate)}</td>
-                <td class="bookmaker-cell">
-                    ${esc(p.bookmaker)}
-                    ${extra > 0 ? `<span class="more-count">+${extra}</span>` : ''}
-                </td>
-                <td><span class="outcome-badge ${isDraw ? 'draw' : ''}">${isDraw ? 'Empate' : esc(p.outcome)}</span></td>
+                <td class="bookmaker-cell">${esc(p.bookmaker)}${extra > 0 ? `<span class="more-count">+${extra}</span>` : ''}</td>
+                <td><span class="outcome-badge ${isDrawOutcome(p.outcome) ? 'draw' : ''}">${isDrawOutcome(p.outcome) ? 'Empate' : esc(p.outcome)}</span></td>
                 <td class="odds-cell">${p.oddPrice.toFixed(2)}</td>
-                <td>${miniProbBarsHTML(p)}</td>
-                <td><span class="risk-badge ${bCls}"><span class="rdot"></span>${sign}${p.benefitRiskIndex.toFixed(3)}</span></td>`;
+                <td><div class="prob-mini">${miniProbRowHTML('L', p.probHome, 'home')}${miniProbRowHTML('E', p.probDraw, 'draw')}${miniProbRowHTML('V', p.probAway, 'away')}</div></td>
+                <td><span class="risk-badge ${riskBadgeClass(p.benefitRiskIndex)}"><span class="rdot"></span>${p.benefitRiskIndex >= 0 ? '+' : ''}${p.benefitRiskIndex.toFixed(3)}</span></td>`;
 
             tr.addEventListener('click', () => openModal(group));
             dom.tableBody.appendChild(tr);
         });
-
         renderPagination(totalPages);
     }
 
-    function miniProbBarsHTML(p) {
-        const rows = [
-            { lbl: 'L', val: p.probHome, cls: 'home' },
-            { lbl: 'E', val: p.probDraw, cls: 'draw' },
-            { lbl: 'V', val: p.probAway, cls: 'away' },
-        ];
-        return `<div class="prob-mini">${rows.map(r => {
-            const pct = (r.val * 100).toFixed(1);
-            return `<div class="prob-mini-row">
-                        <span class="prob-mini-lbl">${r.lbl}</span>
-                        <div class="prob-mini-track">
-                            <div class="prob-mini-fill ${r.cls}" style="width:${pct}%"></div>
-                        </div>
-                        <span class="prob-mini-val">${pct}%</span>
-                    </div>`;
-        }).join('')}</div>`;
+    function probRowHTML(lbl, val, cls) {
+        return `<div class="prob-row"><span class="prob-lbl">${lbl}</span><div class="prob-track"><div class="prob-fill ${cls}" style="width:${(val * 100).toFixed(1)}%"></div></div><span class="prob-val">${(val * 100).toFixed(1)}%</span></div>`;
+    }
+    function miniProbRowHTML(lbl, val, cls) {
+        return `<div class="prob-mini-row"><span class="prob-mini-lbl">${lbl}</span><div class="prob-mini-track"><div class="prob-mini-fill ${cls}" style="width:${(val * 100).toFixed(1)}%"></div></div><span class="prob-mini-val">${(val * 100).toFixed(1)}%</span></div>`;
     }
 
     function renderPagination(totalPages) {
         if (!dom.pagination) return;
-        if (totalPages <= 1) { dom.pagination.classList.add('hidden'); return; }
-        dom.pagination.classList.remove('hidden');
+        dom.pagination.classList.toggle('hidden', totalPages <= 1);
         dom.pageInfo.textContent = `${currentPage} / ${totalPages}`;
         dom.btnPrev.disabled = currentPage === 1;
         dom.btnNext.disabled = currentPage === totalPages;
     }
 
     function bindPagination() {
-        dom.btnPrev?.addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                renderTable(matchGroups.slice(TOP_N));
-                scrollToTable();
-            }
-        });
-        dom.btnNext?.addEventListener('click', () => {
-            const max = Math.ceil((matchGroups.length - TOP_N) / PAGE_SIZE);
-            if (currentPage < max) {
-                currentPage++;
-                renderTable(matchGroups.slice(TOP_N));
-                scrollToTable();
-            }
-        });
+        dom.btnPrev?.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(matchGroups.slice(TOP_N)); } });
+        dom.btnNext?.addEventListener('click', () => { if (currentPage < Math.ceil((matchGroups.length - TOP_N) / PAGE_SIZE)) { currentPage++; renderTable(matchGroups.slice(TOP_N)); } });
     }
 
-    function scrollToTable() {
-        const el = $('table-container');
-        if (el) window.scrollTo({ top: el.offsetTop - 120, behavior: 'smooth' });
-    }
-
-    
-    
     function openModal(group) {
         if (!dom.oddsModal) return;
-
         const p = group.best;
-
-        dom.modalMatchTitle.innerHTML = `
-            <div class="modal-home">${esc(p.homeTeam)}</div>
-            <div class="modal-vs">vs</div>
-            <div class="modal-away">${esc(p.awayTeam)}</div>
-            <div class="modal-date">
-                ${SVG.calendarDate} ${formatDate(p.matchDate)}
-            </div>`;
-
-        dom.modalOddsList.innerHTML = group.all.map((pred, i) => {
-            const sign   = pred.benefitRiskIndex >= 0 ? '+' : '';
-            const bCls   = riskBadgeClass(pred.benefitRiskIndex);
-            const isDraw = isDrawOutcome(pred.outcome);
-            const isBest = i === 0;
-            return `
-                <div class="modal-odds-row${isBest ? ' best' : ''}">
-                    ${isBest ? '<span class="modal-best-tag">MEJOR</span>' : ''}
-                    <div class="modal-bookmaker">${esc(pred.bookmaker)}</div>
-                    <span class="modal-outcome ${isDraw ? 'draw' : ''}">
-                        ${isDraw ? 'Empate' : esc(pred.outcome)}
-                    </span>
-                    <div class="modal-odds-num">${pred.oddPrice.toFixed(2)}</div>
-                    <span class="risk-badge ${bCls}">
-                        <span class="rdot"></span>${sign}${pred.benefitRiskIndex.toFixed(3)}
-                    </span>
-                </div>`;
-        }).join('');
-
-        dom.oddsModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-
-        
-        dom.oddsModal.querySelector('.modal-box')?.focus?.();
+        dom.modalMatchTitle.innerHTML = `<div class="modal-home">${esc(p.homeTeam)}</div><div class="modal-vs">vs</div><div class="modal-away">${esc(p.awayTeam)}</div><div class="modal-date">${SVG.calendarDate} ${formatDate(p.matchDate)}</div>`;
+        dom.modalOddsList.innerHTML = group.all.map((pred, i) => `
+            <div class="modal-odds-row${i === 0 ? ' best' : ''}">
+                ${i === 0 ? '<span class="modal-best-tag">MEJOR</span>' : ''}
+                <div class="modal-bookmaker">${esc(pred.bookmaker)}</div>
+                <span class="modal-outcome ${isDrawOutcome(pred.outcome) ? 'draw' : ''}">${isDrawOutcome(pred.outcome) ? 'Empate' : esc(pred.outcome)}</span>
+                <div class="modal-odds-num">${pred.oddPrice.toFixed(2)}</div>
+                <span class="risk-badge ${riskBadgeClass(pred.benefitRiskIndex)}"><span class="rdot"></span>${pred.benefitRiskIndex >= 0 ? '+' : ''}${pred.benefitRiskIndex.toFixed(3)}</span>
+            </div>`).join('');
+        dom.oddsModal.classList.remove('hidden'); document.body.style.overflow = 'hidden';
+        animateModal();
     }
 
-    function closeModal() {
-        dom.oddsModal?.classList.add('hidden');
-        document.body.style.overflow = '';
-    }
+    function closeModal() { dom.oddsModal?.classList.add('hidden'); document.body.style.overflow = ''; }
 
     function bindModal() {
         dom.modalClose?.addEventListener('click', closeModal);
-
-        
-        dom.oddsModal?.addEventListener('click', e => {
-            if (e.target === dom.oddsModal) closeModal();
-        });
-
-        
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && !dom.oddsModal?.classList.contains('hidden')) {
-                closeModal();
-            }
-        });
+        dom.oddsModal?.addEventListener('click', e => { if (e.target === dom.oddsModal) closeModal(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
     }
 
-    
-    function updateStats(predictions) {
-        const total  = predictions.length;
-        const valCnt = predictions.filter(p => p.benefitRiskIndex > 0).length;
-        const best   = total > 0 ? Math.max(...predictions.map(p => p.benefitRiskIndex)) : 0;
-        const avg    = total > 0 ? predictions.reduce((s, p) => s + p.benefitRiskIndex, 0) / total : 0;
-        const sign   = v => (v >= 0 ? '+' : '');
+    function animateInitialLayout() {
+        if (!window.anime) return;
+        anime({ targets: '.hero-panel, .module-card, .chart-panel', opacity: [0, 1], translateY: [18, 0], delay: anime.stagger(70), duration: 760, easing: 'easeOutCubic' });
+    }
 
-        countUp(dom.statTotal,     total);
-        countUp(dom.statValueBets, valCnt);
+    function animateViewSwitch() {
+        if (!window.anime) return;
+        anime({ targets: '#filter-bar:not(.hidden), .analytics-grid', opacity: [0.35, 1], translateY: [10, 0], duration: 420, easing: 'easeOutCubic' });
+        anime({ targets: '.module-card.active .module-arrow', translateX: [0, 6, 0], duration: 520, easing: 'easeOutCubic' });
+    }
 
-        dom.statBestIndex.textContent = sign(best) + best.toFixed(3);
-        dom.statBestIndex.className   = 'stat-value mono ' + (best > 0 ? 'neon' : '');
+    function animateDataBlocks() {
+        if (!window.anime) return;
+        anime({ targets: '.stat-card, .top-card, tbody tr', opacity: [0, 1], translateY: [10, 0], delay: anime.stagger(24), duration: 460, easing: 'easeOutCubic' });
+    }
 
-        dom.statAvgIndex.textContent  = sign(avg) + avg.toFixed(3);
-        dom.statAvgIndex.className    = 'stat-value mono ' + (avg > 0 ? 'neon' : avg < 0 ? 'violet' : '');
+    function animateModal() {
+        if (!window.anime) return;
+        anime({ targets: '.modal-box', opacity: [0, 1], scale: [0.96, 1], translateY: [16, 0], duration: 320, easing: 'easeOutCubic' });
+        anime({ targets: '.modal-odds-row', opacity: [0, 1], translateX: [12, 0], delay: anime.stagger(45), duration: 360, easing: 'easeOutCubic' });
     }
 
     function countUp(el, target) {
-        const from = parseInt(el.textContent) || 0;
-        const dur  = 550;
-        const t0   = performance.now();
-        const step = t => {
-            const p = Math.min((t - t0) / dur, 1);
-            el.textContent = Math.round(from + (target - from) * (1 - Math.pow(1 - p, 3)));
-            if (p < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
+        const from = parseInt(el.textContent, 10) || 0;
+        if (window.anime) {
+            anime({ targets: el, innerHTML: [from, target], round: 1, easing: 'easeOutExpo', duration: 1000 });
+        } else el.textContent = target;
     }
 
-    
+    function setSignedStat(el, value, text) {
+        el.textContent = text;
+        el.className = `stat-value mono ${value > 0 ? 'neon' : value < 0 ? 'danger' : ''}`;
+    }
+
     function showLoading() {
-        dom.emptyState.classList.add('hidden');
-        dom.top5Section.classList.add('hidden');
-        dom.tableContainer.classList.remove('hidden');
-        dom.tableBody.innerHTML = `
-            <tr class="loading-row">
-                <td colspan="8">
-                    <div class="spinner"></div>
-                    <span>Cargando predicciones…</span>
-                </td>
-            </tr>`;
+        dom.emptyState.classList.add('hidden'); dom.top5Section.classList.add('hidden'); dom.tableContainer.classList.remove('hidden');
+        dom.tableBody.innerHTML = `<tr class="loading-row"><td colspan="8"><div class="spinner"></div><span>Calculando matrices de riesgo...</span></td></tr>`;
         dom.top5Grid.innerHTML = '';
     }
 
     function showEmpty() {
-        matchGroups = [];
-        dom.tableContainer.classList.add('hidden');
-        dom.top5Section.classList.add('hidden');
-        dom.emptyState.classList.remove('hidden');
-        dom.resultCount.textContent   = '';
-        dom.statTotal.textContent     = '0';
-        dom.statValueBets.textContent = '0';
-        dom.statBestIndex.textContent = '—';
-        dom.statAvgIndex.textContent  = '—';
-        if (donutChart) {
-            donutChart.data.datasets[0].data = [0, 100];
-            donutChart.update();
+        matchGroups = []; dom.tableContainer.classList.add('hidden'); dom.top5Section.classList.add('hidden'); dom.emptyState.classList.remove('hidden');
+        dom.resultCount.textContent = ''; dom.statTotal.textContent = '0'; dom.statValueBets.textContent = '0'; dom.statBestIndex.textContent = '-'; dom.statAvgIndex.textContent = '-';
+        destroyCharts();
+    }
+
+    function setStatus(online) { dom.statusDot.className = `status-dot ${online ? 'online' : 'offline'}`; dom.statusText.textContent = online ? 'Data Syncing' : 'Local Mode'; }
+    function startAutoRefresh() { if (refreshTimer) clearInterval(refreshTimer); refreshTimer = setInterval(() => loadPredictions(true), REFRESH_MS); }
+
+    function avgEntries(items, keyFn, valFn) {
+        const map = new Map();
+        items.forEach(item => {
+            const key = keyFn(item); if (!key) return;
+            if (!map.has(key)) map.set(key, { sum: 0, n: 0 });
+            const entry = map.get(key); entry.sum += valFn(item); entry.n++;
+        });
+        return [...map.entries()].map(([label, { sum, n }]) => ({ label, value: n ? sum / n : 0 }));
+    }
+
+    function rivalName(p, team) { return (!team) ? `${p.homeTeam} vs ${p.awayTeam}` : (p.homeTeam === team ? p.awayTeam : p.homeTeam); }
+    function matchLabel(p) { return `${p.homeTeam} vs ${p.awayTeam}`; }
+    function modelProbabilityForOutcome(p) { return isDrawOutcome(p.outcome) ? p.probDraw : (p.outcome === p.homeTeam ? p.probHome : p.probAway); }
+    function avg(items, fn) { return items.length ? items.reduce((s, item) => s + fn(item), 0) / items.length : 0; }
+    function fixed(value) { return Number(value.toFixed(3)); }
+    function riskColorClass(idx) { return idx >= 0 ? 'risk-pos' : (idx > -0.15 ? 'risk-neu' : 'risk-neg'); }
+    function riskBadgeClass(idx) { return idx > 0.3 ? 'pos-strong' : (idx > 0 ? 'pos' : (idx > -0.3 ? 'neu' : (idx > -0.5 ? 'neg' : 'neg-strong'))); }
+    function isDrawOutcome(outcome) { const o = (outcome || '').toLowerCase(); return o === 'draw' || o === 'empate' || o === 'x'; }
+    function formatDate(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return str; } }
+    function formatDateShort(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return str; } }
+    function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+
+    function generateMockData(view, filter) {
+        const teams = ['Real Madrid', 'FC Barcelona', 'Sevilla', 'Athletic Club'];
+        const data = [];
+        for (let i = 0; i < 45; i++) {
+            let h = view === 'team' ? filter : teams[i % 4];
+            let a = teams[(i + 1) % 4];
+            let probH = Math.random() * 0.6 + 0.2, probD = Math.random() * 0.3, probA = 1 - probH - probD;
+            let oPrice = (1 / probH) + (Math.random() * 0.5 - 0.2);
+            data.push({
+                matchDate: new Date(Date.now() + i * 86400000).toISOString(),
+                homeTeam: h, awayTeam: a, bookmaker: view === 'bookmaker' ? filter : ['Bet365', 'Bwin', '1xBet'][i % 3],
+                outcome: i % 2 === 0 ? h : 'Draw', oddPrice: oPrice, probHome: probH, probDraw: probD, probAway: probA,
+                benefitRiskIndex: (probH * oPrice) - 1 + (Math.random() * 0.4 - 0.2)
+            });
         }
-        const pctEl = dom.donutCenter?.querySelector('.donut-pct');
-        if (pctEl) pctEl.textContent = '—';
+        return data;
     }
 
-    
-    function setStatus(online) {
-        dom.statusDot.className    = `status-dot ${online ? 'online' : 'offline'}`;
-        dom.statusText.textContent = online ? 'En línea' : 'Sin conexión';
-    }
-
-    
-    function startAutoRefresh() {
-        if (refreshTimer) clearInterval(refreshTimer);
-        refreshTimer = setInterval(async () => {
-            await loadFilters();
-            await loadPredictions(true);
-        }, REFRESH_MS);
-    }
-
-    
-    function riskColorClass(idx) {
-        if (idx >= 0)    return 'risk-pos';
-        if (idx > -0.15) return 'risk-neu';
-        return 'risk-neg';
-    }
-
-    function riskBadgeClass(idx) {
-        if (idx >  0.3)  return 'pos-strong';
-        if (idx >  0)    return 'pos';
-        if (idx > -0.3)  return 'neu';
-        if (idx > -0.5)  return 'neg';
-        return 'neg-strong';
-    }
-
-    function isDrawOutcome(outcome) {
-        const o = (outcome || '').toLowerCase();
-        return o === 'draw' || o === 'empate';
-    }
-
-    function formatDate(str) {
-        if (!str) return '—';
-        try {
-            const d = new Date(str);
-            if (isNaN(d)) return str;
-            return d.toLocaleDateString('es-ES', {
-                day: '2-digit', month: 'short', year: 'numeric',
-                hour: '2-digit', minute: '2-digit',
-            });
-        } catch { return str; }
-    }
-
-    function formatDateShort(str) {
-        if (!str) return '—';
-        try {
-            const d = new Date(str);
-            if (isNaN(d)) return str;
-            return d.toLocaleDateString('es-ES', {
-                day: '2-digit', month: 'short',
-                hour: '2-digit', minute: '2-digit',
-            });
-        } catch { return str; }
-    }
-
-    function esc(str) {
-        if (!str) return '';
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
