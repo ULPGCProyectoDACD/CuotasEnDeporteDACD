@@ -558,7 +558,7 @@ h1 {
     line-height: 1.4;
 }
 
-.chart-canvas-wrap { height: 380px; min-width: 0; }
+.chart-canvas-wrap { height: 380px; min-width: 0; position: relative; }
 
 .top5-section { margin-bottom: 1.25rem; }
 
@@ -1515,4 +1515,90 @@ body[data-view="bookmaker"] {
         flex-wrap: wrap;
         gap: 0.5rem;
     }
+}
+
+.chart-tooltip {
+    background: rgba(15, 15, 25, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--amber-mid);
+    border-radius: 8px;
+    padding: 12px;
+    pointer-events: none;
+    position: absolute;
+    transform: translate(-50%, -100%);
+    transition: all 0.1s ease;
+    z-index: 1000;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    min-width: 180px;
+    display: none;
+}
+
+.chart-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: var(--amber-mid) transparent transparent transparent;
+}
+
+.tooltip-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--t3);
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 4px;
+}
+
+.tooltip-match {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.tooltip-team {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--t1);
+}
+
+.tooltip-team img { width: 18px; height: 18px; }
+
+.tooltip-vs {
+    font-size: 0.55rem;
+    color: var(--t3);
+    text-transform: uppercase;
+    font-weight: 800;
+    margin-left: 26px;
+}
+
+.tooltip-value {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--amber-dim);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.tooltip-lbl {
+    font-size: 0.6rem;
+    color: var(--amber);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.tooltip-val {
+    font-family: 'JetBrains Mono', monospace;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.9rem;
 }

@@ -4,7 +4,7 @@ import io.javalin.Javalin;
 import org.ulpgc.dacd.frontend.controller.PredictionController;
 import org.ulpgc.dacd.frontend.repository.PredictionReader;
 import org.ulpgc.dacd.frontend.repository.SqlitePredictionReader;
-//import org.ulpgc.dacd.frontend.repository.MockPredictionReader;
+import org.ulpgc.dacd.frontend.repository.MockPredictionReader;
 
 import java.util.Map;
 
@@ -13,8 +13,8 @@ public class FrontendApp {
     private static final String DB_PATH = "database/predictions.db";
 
     public void start() {
-        PredictionReader reader = new SqlitePredictionReader(DB_PATH);
-        //PredictionReader reader = new MockPredictionReader();
+        //PredictionReader reader = new SqlitePredictionReader(DB_PATH);
+        PredictionReader reader = new MockPredictionReader();
         PredictionController controller = new PredictionController(reader);
 
         Javalin app = Javalin.create(config -> {

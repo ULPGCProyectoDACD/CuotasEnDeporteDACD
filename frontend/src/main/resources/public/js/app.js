@@ -360,13 +360,24 @@
     function renderTeamCharts(predictions) {
         const team = dom.filterSelect.value || 'Seleccionado';
         setChartCopy(
-            'Evolución del Value (Próximos Partidos)', 'Tendencia del índice de ventaja para los siguientes cruces',
+            'Distribución de Calidad del Pronóstico', 'Categorización del riesgo en los próximos encuentros',
             'Desviación Probabilística del Modelo', 'Comparativa: Algoritmo predictivo vs Probabilidad Implícita de la Casa'
         );
 
-        const byDate = [...predictions].sort((a,b) => new Date(a.matchDate) - new Date(b.matchDate));
-        const matches = avgEntries(byDate, p => 'vs ' + rivalName(p, team), p => p.benefitRiskIndex).slice(0, 15);
-        charts.primary = new Chart($('primary-chart'), lineConfig(matches.map(m=>m.label), matches.map(m=>fixed(m.value))));
+        const stackData = (oStr) => {
+            const preds = predictions.filter(p => (oStr === 'E' ? isDrawOutcome(p.outcome) : (oStr === 'L' ? p.outcome === p.homeTeam : p.outcome === p.awayTeam)));
+            return {
+                pos: preds.filter(p => p.benefitRiskIndex > 0).length,
+                neu: preds.filter(p => p.benefitRiskIndex <= 0 && p.benefitRiskIndex > -0.15).length,
+                neg: preds.filter(p => p.benefitRiskIndex <= -0.15).length
+            };
+        };
+        const dL = stackData('L'), dE = stackData('E'), dV = stackData('V');
+
+        charts.primary = new Chart($('primary-chart'), stackedBarConfig(
+            ['Local', 'Empate', 'Visitante'],
+            [dL.pos, dE.pos, dV.pos], [dL.neu, dE.neu, dV.neu], [dL.neg, dE.neg, dV.neg]
+        ));
 
         const getProbs = (outcomeStr) => {
             const preds = predictions.filter(p => {
@@ -391,8 +402,8 @@
 
     function renderBookmakerCharts(predictions) {
         setChartCopy(
-            'Top 10 Encuentros de Alto Valor', 'Partidos que ofrecen el mayor margen matemático',
-            'Distribución de Calidad por Resultado', 'Volumen de pronósticos 1X2 categorizados por su rentabilidad'
+            'Máximo Valor Detectado (Chollos)', 'Picos de oportunidad: la mejor cuota encontrada por día',
+            'Consistencia del Margen (Peaks)', 'Seguimiento de las mejores cuotas encontradas por jornada'
         );
 
         const byMatch = avgEntries(predictions, p => matchLabel(p), p => p.benefitRiskIndex)
@@ -401,19 +412,13 @@
             byMatch.map(e => e.label), byMatch.map(e => fixed(e.value)), 'Margen a Favor'
         ));
 
-        const stackData = (oStr) => {
-            const preds = predictions.filter(p => (oStr === 'E' ? isDrawOutcome(p.outcome) : (oStr === 'L' ? p.outcome === p.homeTeam : p.outcome === p.awayTeam)));
-            return {
-                pos: preds.filter(p => p.benefitRiskIndex > 0).length,
-                neu: preds.filter(p => p.benefitRiskIndex <= 0 && p.benefitRiskIndex > -0.15).length,
-                neg: preds.filter(p => p.benefitRiskIndex <= -0.15).length
-            };
-        };
-        const dL = stackData('L'), dE = stackData('E'), dV = stackData('V');
-
-        charts.secondary = new Chart($('secondary-chart'), stackedBarConfig(
-            ['Victoria Local', 'Empate', 'Victoria Visitante'],
-            [dL.pos, dE.pos, dV.pos], [dL.neu, dE.neu, dV.neu], [dL.neg, dE.neg, dV.neg]
+        const byDate = [...predictions].sort((a,b) => new Date(a.matchDate) - new Date(b.matchDate));
+        const timeData = maxEntries(byDate, p => formatDateShort(p.matchDate), p => p.benefitRiskIndex).slice(0, 15);
+        
+        charts.secondary = new Chart($('secondary-chart'), lineConfig(
+            timeData.map(d => d.label), 
+            timeData.map(d => fixed(d.value)),
+            timeData.map(d => d.match)
         ));
     }
 
@@ -425,7 +430,7 @@
     }
 
 
-    function lineConfig(labels, data) {
+    function lineConfig(labels, data, matches = []) {
         return {
             type: 'line',
             data: {
@@ -433,10 +438,64 @@
                 datasets: [{
                     label: 'Índice Riesgo', data,
                     borderColor: THEME.amber, backgroundColor: THEME.amberDim,
-                    fill: true, tension: 0.3, pointBackgroundColor: data.map(v => getRiskColor(v))
+                    fill: true, tension: 0.3, pointBackgroundColor: data.map(v => getRiskColor(v)),
+                    matches
                 }]
             },
-            options: axisOptions('x', 'Riesgo', true)
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: false,
+                        external: (context) => {
+                            const canvas = context.chart.canvas;
+                            const container = canvas.parentElement;
+                            let tooltipEl = container.querySelector('.chart-tooltip');
+                            
+                            if (!tooltipEl) {
+                                tooltipEl = document.createElement('div');
+                                tooltipEl.className = 'chart-tooltip';
+                                container.appendChild(tooltipEl);
+                            }
+
+                            const tooltipModel = context.tooltip;
+                            if (tooltipModel.opacity === 0) {
+                                tooltipEl.style.display = 'none';
+                                return;
+                            }
+
+                            if (tooltipModel.body) {
+                                const dataPoint = tooltipModel.dataPoints[0];
+                                const match = dataPoint.dataset.matches[dataPoint.dataIndex];
+                                if (match) {
+                                    tooltipEl.innerHTML = `
+                                        <div class="tooltip-header">${dataPoint.label}</div>
+                                        <div class="tooltip-match">
+                                            <div class="tooltip-team">${teamLogoHTML(match.homeTeam)}<span>${esc(match.homeTeam)}</span></div>
+                                            <div class="tooltip-vs">VS</div>
+                                            <div class="tooltip-team">${teamLogoHTML(match.awayTeam)}<span>${esc(match.awayTeam)}</span></div>
+                                        </div>
+                                        <div class="tooltip-value">
+                                            <span class="tooltip-lbl">VALOR</span>
+                                            <span class="tooltip-val">${fixed(match.benefitRiskIndex)}</span>
+                                        </div>
+                                    `;
+                                }
+                            }
+
+                            tooltipEl.style.display = 'block';
+                            tooltipEl.style.left = tooltipModel.caretX + 'px';
+                            tooltipEl.style.top = tooltipModel.caretY + 'px';
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { color: THEME.grid }, ticks: { color: THEME.textMuted, font: { size: 10 } } },
+                    y: { grid: { color: THEME.grid }, ticks: { color: THEME.textMuted } }
+                }
+            }
         };
     }
 
@@ -452,8 +511,17 @@
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { position: 'top', labels: { color: THEME.textMuted, usePointStyle: true } } },
-                scales: { x: { grid: { display: false }, ticks: { color: THEME.textMuted } }, y: { grid: { color: THEME.grid }, ticks: { color: THEME.textMuted } } }
+                plugins: { 
+                    legend: { 
+                        position: 'top', 
+                        padding: 80,
+                        labels: { color: THEME.textMuted, usePointStyle: true } 
+                    } 
+                },
+                scales: { 
+                    x: { grid: { display: false }, ticks: { color: THEME.textMuted } }, 
+                    y: { grid: { color: THEME.grid }, ticks: { color: THEME.textMuted } } 
+                }
             }
         };
     }
@@ -471,10 +539,16 @@
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { position: 'top', labels: { color: THEME.textMuted, usePointStyle: true } } },
+                plugins: { 
+                    legend: { 
+                        position: 'top', 
+                        padding: 80,
+                        labels: { color: THEME.textMuted, usePointStyle: true } 
+                    } 
+                },
                 scales: {
                     x: { stacked: true, grid: { display: false }, ticks: { color: THEME.textMuted } },
-                    y: { stacked: true, grid: { color: THEME.grid }, ticks: { color: THEME.textMuted } }
+                    y: { stacked: true, grid: { color: THEME.grid }, ticks: { color: THEME.textMuted }, grace: '15%' }
                 }
             }
         };
@@ -721,6 +795,26 @@
         return [...map.entries()].map(([label, { sum, n }]) => ({ label, value: n ? sum / n : 0 }));
     }
 
+    function avgEntriesWithItems(items, keyFn, valFn) {
+        const map = new Map();
+        items.forEach(item => {
+            const key = keyFn(item); if (!key) return;
+            if (!map.has(key)) map.set(key, { sum: 0, n: 0, first: item });
+            const entry = map.get(key); entry.sum += valFn(item); entry.n++;
+        });
+        return [...map.entries()].map(([label, { sum, n, first }]) => ({ label, value: n ? sum / n : 0, first }));
+    }
+
+    function maxEntries(items, keyFn, valFn) {
+        const map = new Map();
+        items.forEach(item => {
+            const key = keyFn(item); if (!key) return;
+            const val = valFn(item);
+            if (!map.has(key) || val > map.get(key).value) map.set(key, { value: val, match: item });
+        });
+        return [...map.entries()].map(([label, data]) => ({ label, value: data.value, match: data.match }));
+    }
+
     function rivalName(p, team) { return (!team) ? `${p.homeTeam} vs ${p.awayTeam}` : (p.homeTeam === team ? p.awayTeam : p.homeTeam); }
     function matchLabel(p) { return `${p.homeTeam} vs ${p.awayTeam}`; }
     function modelProbabilityForOutcome(p) { return isDrawOutcome(p.outcome) ? p.probDraw : (p.outcome === p.homeTeam ? p.probHome : p.probAway); }
@@ -730,7 +824,7 @@
     function riskBadgeClass(idx) { return idx > 0.3 ? 'pos-strong' : (idx > 0 ? 'pos' : (idx > -0.3 ? 'neu' : (idx > -0.5 ? 'neg' : 'neg-strong'))); }
     function isDrawOutcome(outcome) { const o = (outcome || '').toLowerCase(); return o === 'draw' || o === 'empate' || o === 'x'; }
     function formatDate(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return str; } }
-    function formatDateShort(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return str; } }
+    function formatDateShort(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }); } catch { return str; } }
     function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 
     window.handleImgErr = function(img, teamName) {
