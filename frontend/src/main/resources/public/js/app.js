@@ -185,9 +185,9 @@
     function updateViewTitle() {
         const selected = dom.filterSelect.value;
         const titles = {
-            global: 'Ranking Global de Riesgo',
-            team: selected ? `Análisis de ${selected}` : 'Análisis por Equipo',
-            bookmaker: selected ? `Análisis de ${selected}` : 'Análisis por Casa de Apuestas',
+            global: 'Cuotas recomendadas',
+            team: selected ? `Cuotas recomendadas para ${selected}` : 'Cuotas recomendadas por equipo',
+            bookmaker: selected ? `Cuotas recomendadas para ${selected}` : 'Cuotas recomendadas por casa',
         };
         dom.tableTitle.textContent = titles[currentView] || titles.global;
     }
@@ -625,40 +625,56 @@
         groups.forEach((group, i) => {
             const rank = i + 1; const p = group.best;
             const extra = group.all.length - 1;
-            const isHero = rank === 1 || (groups.length === 2 && rank === 2);
+            const isHero = (rank === 1 || (groups.length === 2 && rank === 2)) && currentView !== 'team';
+            const isMainHero = rank === 1 && currentView !== 'team';
 
             const card = document.createElement('div');
-            card.className = `top-card rank-${rank}${isHero ? ' hero-style' : ''}`;
+            card.className = `top-card rank-${rank}${isHero ? ' hero-style' : ''}${isMainHero ? ' main-hero' : ''}`;
             card.setAttribute('role', 'button'); card.setAttribute('tabindex', '0');
 
             card.innerHTML = `
-                <div class="card-rank">
-                    <span class="rank-number">#${rank}</span>
-                    ${isHero ? '<span class="rank-badge">MEJOR CUOTA</span>' : ''}
-                    ${extra > 0 ? `<span class="more-badge">${extra + 1} casas</span>` : ''}
-                </div>
-                <div class="card-match">
-                    <div class="card-team">${teamLogoHTML(p.homeTeam)}<span>${esc(p.homeTeam)}</span></div>
-                    <div class="card-vs">vs</div>
-                    <div class="card-team">${teamLogoHTML(p.awayTeam)}<span>${esc(p.awayTeam)}</span></div>
-                </div>
-                <div class="card-meta">
-                    <span class="card-meta-item">${SVG.calendar} ${formatDate(p.matchDate)}</span>
-                    <span class="card-meta-item">${SVG.building} ${esc(p.bookmaker)}</span>
-                </div>
-                <span class="card-outcome ${isDrawOutcome(p.outcome) ? 'draw' : ''}">${isDrawOutcome(p.outcome) ? 'Empate' : esc(p.outcome)}</span>
-                <div class="card-bottom">
-                    <div class="card-odds-block">
-                        <div class="card-lbl">Cuota</div>
-                        <div class="card-odds-value">${p.oddPrice.toFixed(2)}</div>
+                <div class="card-rank-row">
+                    <div class="rank-info">
+                        <span class="rank-number">#${rank}</span>
+                        ${isHero ? '<span class="rank-badge-hero">MEJOR OPCIÓN</span>' : ''}
+                        ${extra > 0 ? `<span class="more-badge">${extra + 1} casas</span>` : ''}
                     </div>
-                    <div class="prob-bars">${probRowHTML('V', p.probHome, 'home')}${probRowHTML('E', p.probDraw, 'draw')}${probRowHTML('D', p.probAway, 'away')}</div>
-                    <div class="card-risk-block">
-                        <div class="card-lbl">Índice de Riesgo</div>
-                        <div class="card-risk-value ${riskColorClass(p.benefitRiskIndex)}">${p.benefitRiskIndex >= 0 ? '+' : ''}${p.benefitRiskIndex.toFixed(3)}</div>
+                    <div class="card-meta-compact">
+                        <span>${formatDate(p.matchDate)}</span>
                     </div>
                 </div>
-                ${extra > 0 ? '<div class="card-cta">Ver todas las cuotas &rarr;</div>' : ''}`;
+
+                <div class="card-match-compact">
+                    <div class="compact-team">${teamLogoHTML(p.homeTeam)}<span>${esc(p.homeTeam)}</span></div>
+                    <span class="vs-mini">vs</span>
+                    <div class="compact-team">${teamLogoHTML(p.awayTeam)}<span>${esc(p.awayTeam)}</span></div>
+                </div>
+
+                <div class="bet-zone ${getOutcomeClass(p)}">
+                    <div class="bet-team-info">
+                        <span class="bet-tag">PREDICCIÓN RECOMENDADA</span>
+                        <span class="bet-name">${isDrawOutcome(p.outcome) ? 'Empate' : esc(p.outcome)}</span>
+                    </div>
+                    <div class="bet-price-info">
+                        <span class="bet-tag">${esc(p.bookmaker)} • CUOTA</span>
+                        <span class="bet-value">${p.oddPrice.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div class="risk-highlight-zone">
+                    <div class="risk-tag">ÍNDICE DE RIESGO</div>
+                    <div class="risk-hero-value ${riskColorClass(p.benefitRiskIndex)}">
+                        ${p.benefitRiskIndex >= 0 ? '+' : ''}${p.benefitRiskIndex.toFixed(3)}
+                    </div>
+                </div>
+
+                <div class="prob-bars-footer">
+                    ${probRowHTML('V', p.probHome, 'home')}
+                    ${probRowHTML('E', p.probDraw, 'draw')}
+                    ${probRowHTML('D', p.probAway, 'away')}
+                </div>
+                
+                ${extra > 0 ? `<div class="card-cta">${isMainHero ? 'ANALIZAR MERCADO COMPLETO &rarr;' : 'Analizar mercado completo &rarr;'}</div>` : ''}`;
 
             card.addEventListener('click', () => openModal(group));
             dom.top5Grid.appendChild(card);
@@ -691,10 +707,10 @@
                 </div></td>
                 <td class="date-cell">${formatDateShort(p.matchDate)}</td>
                 <td class="bookmaker-cell">${esc(p.bookmaker)}${extra > 0 ? `<span class="more-count">+${extra}</span>` : ''}</td>
-                <td><span class="outcome-badge ${isDrawOutcome(p.outcome) ? 'draw' : ''}">${isDrawOutcome(p.outcome) ? 'Empate' : esc(p.outcome)}</span></td>
-                <td class="odds-cell">${p.oddPrice.toFixed(2)}</td>
+                <td><span class="outcome-badge ${getOutcomeClass(p)}">${isDrawOutcome(p.outcome) ? 'Empate' : esc(p.outcome)}</span></td>
+                <td><span class="risk-badge ${riskBadgeClass(p.benefitRiskIndex)}"><span class="rdot"></span>${p.benefitRiskIndex >= 0 ? '+' : ''}${p.benefitRiskIndex.toFixed(3)}</span></td>
                 <td><div class="prob-mini">${miniProbRowHTML('V', p.probHome, 'home')}${miniProbRowHTML('E', p.probDraw, 'draw')}${miniProbRowHTML('D', p.probAway, 'away')}</div></td>
-                <td><span class="risk-badge ${riskBadgeClass(p.benefitRiskIndex)}"><span class="rdot"></span>${p.benefitRiskIndex >= 0 ? '+' : ''}${p.benefitRiskIndex.toFixed(3)}</span></td>`;
+                <td class="odds-cell">${p.oddPrice.toFixed(2)}</td>`;
 
             tr.addEventListener('click', () => openModal(group));
             dom.tableBody.appendChild(tr);
@@ -730,9 +746,9 @@
             <div class="modal-odds-row${i === 0 ? ' best' : ''}">
                 ${i === 0 ? '<span class="modal-best-tag">MEJOR</span>' : ''}
                 <div class="modal-bookmaker">${esc(pred.bookmaker)}</div>
-                <span class="modal-outcome ${isDrawOutcome(pred.outcome) ? 'draw' : ''}">${isDrawOutcome(pred.outcome) ? 'Empate' : esc(pred.outcome)}</span>
-                <div class="modal-odds-num">${pred.oddPrice.toFixed(2)}</div>
+                <span class="modal-outcome ${getOutcomeClass(pred)}">${isDrawOutcome(pred.outcome) ? 'Empate' : esc(pred.outcome)}</span>
                 <span class="risk-badge ${riskBadgeClass(pred.benefitRiskIndex)}"><span class="rdot"></span>${pred.benefitRiskIndex >= 0 ? '+' : ''}${pred.benefitRiskIndex.toFixed(3)}</span>
+                <div class="modal-odds-num">${pred.oddPrice.toFixed(2)}</div>
             </div>`).join('');
         dom.oddsModal.classList.remove('hidden'); document.body.style.overflow = 'hidden';
         animateModal();
@@ -834,6 +850,11 @@
     function riskColorClass(idx) { return idx > 0.2 ? 'risk-pos' : (idx >= -0.2 ? 'risk-neu' : 'risk-neg'); }
     function riskBadgeClass(idx) { return idx > 0.4 ? 'pos-strong' : (idx > 0.2 ? 'pos' : (idx >= -0.2 ? 'neu' : (idx >= -0.5 ? 'neg' : 'neg-strong'))); }
     function isDrawOutcome(outcome) { const o = (outcome || '').toLowerCase(); return o === 'draw' || o === 'empate' || o === 'x'; }
+    function getOutcomeClass(p) {
+        if (isDrawOutcome(p.outcome)) return 'draw';
+        if (p.outcome === p.awayTeam) return 'away';
+        return 'home';
+    }
     function formatDate(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return str; } }
     function formatDateShort(str) { try { const d = new Date(str); return isNaN(d) ? str : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }); } catch { return str; } }
     function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
