@@ -56,3 +56,7 @@ __pycache__/
 # Bases de datos locales
 database/
 *.db
+
+# Modelos de Machine Learning generados
+models/
+*.onnx

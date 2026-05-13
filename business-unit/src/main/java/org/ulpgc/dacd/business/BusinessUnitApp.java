@@ -13,27 +13,40 @@ import org.ulpgc.dacd.business.control.trainer.PythonModelTrainer;
 import org.ulpgc.dacd.business.control.persistence.PredictionRepository;
 import org.ulpgc.dacd.business.control.persistence.SqlitePredictionRepository;
 
+import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class BusinessUnitApp {
+
+    private final String basePath;
+
+    public BusinessUnitApp(String basePath) {
+        this.basePath = basePath;
+    }
+
     public void start() {
         try {
-            ModelTrainer trainer = new PythonModelTrainer("machine-learning", "main.py");
+            ModelTrainer trainer = new PythonModelTrainer("machine-learning", "main.py", basePath);
             trainer.trainModel();
 
             TeamStatsManager statsManager = new EventStoreTeamStatsManager();
-            MatchPredictor predictor = new OnnxMatchPredictor("business-unit/src/main/resources/match_model.onnx");
+
+            String onnxPath = Paths.get(basePath, "models", "match_model.onnx").toString();
+            MatchPredictor predictor = new OnnxMatchPredictor(onnxPath);
 
             System.out.println("\n--- INICIANDO SISTEMA CORE ---");
-            statsManager.loadStatsFromEventStore(PathResolver.resolveEventStorePath());
+            String eventStorePath = PathResolver.resolveEventStorePath(basePath);
+            statsManager.loadStatsFromEventStore(eventStorePath);
 
-            PredictionRepository repository = new SqlitePredictionRepository("database/predictions.db");
+            String dbPath = Paths.get(basePath, "database", "predictions.db").toString();
+            PredictionRepository repository = new SqlitePredictionRepository(dbPath);
+
             PredictionService predictionService = new PredictionService(statsManager, predictor);
             BusinessController controller = new BusinessController(predictionService, repository);
 
-            setupScheduledMaintenance(repository, trainer, statsManager);
+            setupScheduledMaintenance(repository, trainer, statsManager, eventStorePath);
 
             System.out.println("\n--- ARRANCANDO ESCUCHADOR DE CUOTAS ---");
             OddsReceiver receiver = new ActiveMQOddsReceiver("tcp://localhost:61616", "FootballOdd", controller::processOddsMessage);
@@ -44,17 +57,15 @@ public class BusinessUnitApp {
         }
     }
 
-    private void setupScheduledMaintenance(PredictionRepository repository, ModelTrainer trainer, TeamStatsManager statsManager) {
+    private void setupScheduledMaintenance(PredictionRepository repository, ModelTrainer trainer, TeamStatsManager statsManager, String eventStorePath) {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
         Runnable maintenanceTask = () -> {
             try {
                 System.out.println("\n🛠️ [MANTENIMIENTO PROGRAMADO] Iniciando tareas de actualización...");
-
                 repository.cleanOldPredictions();
                 trainer.trainModel();
-                statsManager.loadStatsFromEventStore(PathResolver.resolveEventStorePath());
-
+                statsManager.loadStatsFromEventStore(eventStorePath);
                 System.out.println("✅ [MANTENIMIENTO PROGRAMADO] Actualización completada con éxito. Sistema al 100%.");
             } catch (Exception e) {
                 System.err.println("❌ [ERROR MANTENIMIENTO] Falló la tarea programada: " + e.getMessage());

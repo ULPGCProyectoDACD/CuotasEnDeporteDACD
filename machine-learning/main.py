@@ -4,12 +4,11 @@ from model_trainer import train_and_export_model
 import shutil
 import os
 
-
 EVENTSTORE_DIR = '../eventstore/FootballResult/feeder-results' 
 CSV_OUTPUT_PATH = 'historical_dataset.csv'
 ONNX_LOCAL_PATH = 'match_model.onnx'
-JAVA_RESOURCES_DIR = '../business-unit/src/main/resources'
-ONNX_JAVA_PATH = f'{JAVA_RESOURCES_DIR}/match_model.onnx'
+MODELS_DIR = '../models'
+ONNX_EXPORT_PATH = f'{MODELS_DIR}/match_model.onnx'
 
 def main():
     print(f"Buscando archivos en: {EVENTSTORE_DIR}")
@@ -29,11 +28,11 @@ def main():
     if df is not None:
         train_and_export_model(df, ONNX_LOCAL_PATH)
         
-        if not os.path.exists(JAVA_RESOURCES_DIR):
-            os.makedirs(JAVA_RESOURCES_DIR)
+        if not os.path.exists(MODELS_DIR):
+            os.makedirs(MODELS_DIR)
             
-        shutil.copy(ONNX_LOCAL_PATH, ONNX_JAVA_PATH)
-        print(f"¡Modelo copiado automáticamente a Java en: {ONNX_JAVA_PATH}!")
+        shutil.copy(ONNX_LOCAL_PATH, ONNX_EXPORT_PATH)
+        print(f"¡Modelo copiado automáticamente para producción en: {ONNX_EXPORT_PATH}!")
         print("--- PIPELINE COMPLETADO ---")
 
 if __name__ == "__main__":

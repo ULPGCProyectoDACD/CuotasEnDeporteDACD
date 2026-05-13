@@ -10,10 +10,12 @@ public class PythonModelTrainer implements ModelTrainer {
     private final String mlDirectoryName;
     private final String scriptName;
     private final String pythonExePath;
+    private final String basePath;
 
-    public PythonModelTrainer(String mlDirectoryName, String scriptName) {
+    public PythonModelTrainer(String mlDirectoryName, String scriptName, String basePath) {
         this.mlDirectoryName = mlDirectoryName;
         this.scriptName = scriptName;
+        this.basePath = basePath;
         this.pythonExePath = determinePythonPath();
     }
 
@@ -47,7 +49,7 @@ public class PythonModelTrainer implements ModelTrainer {
     }
 
     private Path resolveWorkingDirectory() {
-        Path baseDir = Paths.get(System.getProperty("user.dir"));
+        Path baseDir = Paths.get(basePath);
         Path mlFolder = baseDir.resolve(mlDirectoryName);
         return Files.exists(mlFolder) ? mlFolder : baseDir.resolveSibling(mlDirectoryName);
     }
@@ -59,7 +61,7 @@ public class PythonModelTrainer implements ModelTrainer {
         processBuilder.environment().put("PYTHONIOENCODING", "utf-8");
         int exitCode = processBuilder.start().waitFor();
         if (exitCode == 0) {
-            System.out.println("✅ Entrenamiento completado. El modelo .onnx se ha actualizado.");
+            System.out.println("✅ Entrenamiento completado.");
         } else {
             System.err.println("❌ Hubo un error en Python. Código de salida: " + exitCode);
         }
