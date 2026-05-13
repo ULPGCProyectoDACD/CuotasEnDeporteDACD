@@ -379,7 +379,7 @@
         const dL = stackData('L'), dE = stackData('E'), dV = stackData('V');
 
         charts.primary = new Chart($('primary-chart'), stackedBarConfig(
-            ['Local', 'Empate', 'Visitante'],
+            ['Victoria', 'Empate', 'Derrota'],
             [dL.pos, dE.pos, dV.pos], [dL.neu, dE.neu, dV.neu], [dL.neg, dE.neg, dV.neg]
         ));
 
@@ -398,7 +398,7 @@
 
         const local = getProbs('L'), empate = getProbs('E'), visitante = getProbs('V');
         charts.secondary = new Chart($('secondary-chart'), groupedBarConfig(
-            ['Local', 'Empate', 'Visitante'],
+            ['Victoria', 'Empate', 'Derrota'],
             [fixed(local.mod), fixed(empate.mod), fixed(visitante.mod)],
             [fixed(local.casa), fixed(empate.casa), fixed(visitante.casa)]
         ));
@@ -652,7 +652,7 @@
                         <div class="card-lbl">Cuota</div>
                         <div class="card-odds-value">${p.oddPrice.toFixed(2)}</div>
                     </div>
-                    <div class="prob-bars">${probRowHTML('L', p.probHome, 'home')}${probRowHTML('E', p.probDraw, 'draw')}${probRowHTML('V', p.probAway, 'away')}</div>
+                    <div class="prob-bars">${probRowHTML('V', p.probHome, 'home')}${probRowHTML('E', p.probDraw, 'draw')}${probRowHTML('D', p.probAway, 'away')}</div>
                     <div class="card-risk-block">
                         <div class="card-lbl">Índice de Riesgo</div>
                         <div class="card-risk-value ${riskColorClass(p.benefitRiskIndex)}">${p.benefitRiskIndex >= 0 ? '+' : ''}${p.benefitRiskIndex.toFixed(3)}</div>
@@ -693,7 +693,7 @@
                 <td class="bookmaker-cell">${esc(p.bookmaker)}${extra > 0 ? `<span class="more-count">+${extra}</span>` : ''}</td>
                 <td><span class="outcome-badge ${isDrawOutcome(p.outcome) ? 'draw' : ''}">${isDrawOutcome(p.outcome) ? 'Empate' : esc(p.outcome)}</span></td>
                 <td class="odds-cell">${p.oddPrice.toFixed(2)}</td>
-                <td><div class="prob-mini">${miniProbRowHTML('L', p.probHome, 'home')}${miniProbRowHTML('E', p.probDraw, 'draw')}${miniProbRowHTML('V', p.probAway, 'away')}</div></td>
+                <td><div class="prob-mini">${miniProbRowHTML('V', p.probHome, 'home')}${miniProbRowHTML('E', p.probDraw, 'draw')}${miniProbRowHTML('D', p.probAway, 'away')}</div></td>
                 <td><span class="risk-badge ${riskBadgeClass(p.benefitRiskIndex)}"><span class="rdot"></span>${p.benefitRiskIndex >= 0 ? '+' : ''}${p.benefitRiskIndex.toFixed(3)}</span></td>`;
 
             tr.addEventListener('click', () => openModal(group));

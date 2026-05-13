@@ -1,6 +1,7 @@
 import json
 import os
 import glob
+from team_mapper import get_official_name
 
 
 def get_event_files(directory_path):
@@ -23,8 +24,8 @@ def extract_match_data(json_line):
     
     return {
         "Date": event["date"],
-        "Home_Team": event["homeTeam"]["name"],
-        "Away_Team": event["awayTeam"]["name"],
+        "Home_Team": get_official_name(event["homeTeam"]["name"]),
+        "Away_Team": get_official_name(event["awayTeam"]["name"]),
         "Home_Goals": home_goals,
         "Away_Goals": away_goals,
         "Match_Result": calculate_match_result(home_goals, away_goals)

@@ -10,20 +10,29 @@ class TeamHistory:
             return 0, 0.0, 0.0
         
         recent_matches = self.history[team_name]
-        total_points = sum(m['points'] for m in recent_matches)
-        avg_gf = sum(m['gf'] for m in recent_matches) / len(recent_matches)
-        avg_gc = sum(m['gc'] for m in recent_matches) / len(recent_matches)
+        n = len(recent_matches)
+        decay = 0.9
         
-        return total_points, avg_gf, avg_gc
+        total_weight = 0
+        w_points = 0
+        w_gf = 0
+        w_gc = 0
+        
+        for i, m in enumerate(recent_matches):
+            # El más reciente (i = n-1) tiene peso decay^0 = 1
+            weight = decay ** (n - 1 - i)
+            total_weight += weight
+            w_points += m['points'] * weight
+            w_gf += m['gf'] * weight
+            w_gc += m['gc'] * weight
+            
+        return w_points / total_weight, w_gf / total_weight, w_gc / total_weight
 
     def add_match_result(self, team_name, points, gf, gc):
         if team_name not in self.history:
             self.history[team_name] = []
         
         self.history[team_name].append({'points': points, 'gf': gf, 'gc': gc})
-        
-        if len(self.history[team_name]) > self.window_size:
-            self.history[team_name].pop(0)
 
 
 def calculate_streaks_and_save(matches, output_path, window_size=20):

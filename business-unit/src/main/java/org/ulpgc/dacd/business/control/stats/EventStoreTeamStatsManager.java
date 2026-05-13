@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 public class EventStoreTeamStatsManager implements TeamStatsManager {
 
-    private static final int WINDOW_SIZE = 5;
     private final Map<String, LinkedList<MatchStat>> history = new HashMap<>();
 
     public void loadStatsFromEventStore(String directoryPath) {
@@ -66,8 +65,8 @@ public class EventStoreTeamStatsManager implements TeamStatsManager {
         JsonObject homeObj = json.getAsJsonObject("homeTeam");
         JsonObject awayObj = json.getAsJsonObject("awayTeam");
         
-        String homeTeam = homeObj.has("shortName") ? homeObj.get("shortName").getAsString() : homeObj.get("name").getAsString();
-        String awayTeam = awayObj.has("shortName") ? awayObj.get("shortName").getAsString() : awayObj.get("name").getAsString();
+        String homeTeam = homeObj.get("name").getAsString();
+        String awayTeam = awayObj.get("name").getAsString();
 
         homeTeam = TeamNameMapper.getOfficialName(homeTeam);
         awayTeam = TeamNameMapper.getOfficialName(awayTeam);
@@ -108,10 +107,6 @@ public class EventStoreTeamStatsManager implements TeamStatsManager {
         LinkedList<MatchStat> teamMatches = history.get(teamName);
 
         teamMatches.add(new MatchStat(points, gf, gc));
-
-        if (teamMatches.size() > WINDOW_SIZE) {
-            teamMatches.removeFirst();
-        }
     }
 
 
@@ -126,17 +121,19 @@ public class EventStoreTeamStatsManager implements TeamStatsManager {
     }
 
     private float[] calculateAverages(List<MatchStat> recentMatches) {
-        float totalPoints = 0, totalGf = 0, totalGc = 0;
+        float totalWeight = 0, wPoints = 0, wGf = 0, wGc = 0;
+        float decay = 0.9f;
+        int n = recentMatches.size();
 
-        for (MatchStat stat : recentMatches) {
-            totalPoints += stat.points();
-            totalGf += stat.goalsFor();
-            totalGc += stat.goalsAgainst();
+        for (int i = 0; i < n; i++) {
+            MatchStat stat = recentMatches.get(i);
+            float weight = (float) Math.pow(decay, n - 1 - i);
+            totalWeight += weight;
+            wPoints += stat.points() * weight;
+            wGf += stat.goalsFor() * weight;
+            wGc += stat.goalsAgainst() * weight;
         }
 
-        float avgGf = totalGf / recentMatches.size();
-        float avgGc = totalGc / recentMatches.size();
-
-        return new float[]{totalPoints, avgGf, avgGc};
+        return new float[]{wPoints / totalWeight, wGf / totalWeight, wGc / totalWeight};
     }
 }
