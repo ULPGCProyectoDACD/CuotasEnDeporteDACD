@@ -37,7 +37,8 @@ public class BusinessUnitApp {
             MatchPredictor predictor = new OnnxMatchPredictor(onnxPath);
 
             System.out.println("\n--- INICIANDO SISTEMA CORE ---");
-            String eventStorePath = PathResolver.resolveEventStorePath(basePath);
+            PathResolver pathResolver = new PathResolver(basePath);
+            String eventStorePath = pathResolver.resolveEventStorePath();
             statsManager.loadStatsFromEventStore(eventStorePath);
 
             String dbPath = Paths.get(basePath, "database", "predictions.db").toString();

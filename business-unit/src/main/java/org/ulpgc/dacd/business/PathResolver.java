@@ -5,7 +5,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class PathResolver {
-    public static String resolveEventStorePath(String basePathStr) {
+    private final String basePathStr;
+
+    public PathResolver(String basePathStr) {
+        this.basePathStr = basePathStr;
+    }
+
+    public String resolveEventStorePath() {
         Path baseDir = Paths.get(basePathStr);
 
         Path pathFromRoot = baseDir.resolve("eventstore/FootballResult/feeder-results");
