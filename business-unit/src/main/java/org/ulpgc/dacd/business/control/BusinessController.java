@@ -1,6 +1,8 @@
 package org.ulpgc.dacd.business.control;
 
 import com.google.gson.Gson;
+import org.ulpgc.dacd.business.control.jms.ActiveMQOddsReceiver;
+import org.ulpgc.dacd.business.control.jms.OddsReceiver;
 import org.ulpgc.dacd.business.control.persistence.PredictionRepository;
 import org.ulpgc.dacd.business.model.OddsEvent;
 import java.util.Map;
@@ -9,14 +11,17 @@ public class BusinessController {
     private final PredictionService predictionService;
     private final PredictionRepository repository;
     private final Gson gson;
+    private final OddsReceiver receiver;
 
     public BusinessController(PredictionService predictionService, PredictionRepository repository) {
         this.predictionService = predictionService;
         this.repository = repository;
         this.gson = new Gson();
+        this.receiver = new ActiveMQOddsReceiver("tcp://localhost:61616", "FootballOdd", this::processOddsMessage);
+        this.receiver.start();
     }
 
-    public void processOddsMessage(String rawJson) {
+    private void processOddsMessage(String rawJson) {
         try {
             OddsEvent odd = gson.fromJson(rawJson, OddsEvent.class);
 

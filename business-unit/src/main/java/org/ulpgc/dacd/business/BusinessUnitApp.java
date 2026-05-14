@@ -2,8 +2,6 @@ package org.ulpgc.dacd.business;
 
 import org.ulpgc.dacd.business.control.BusinessController;
 import org.ulpgc.dacd.business.control.PredictionService;
-import org.ulpgc.dacd.business.control.jms.ActiveMQOddsReceiver;
-import org.ulpgc.dacd.business.control.jms.OddsReceiver;
 import org.ulpgc.dacd.business.control.predictor.MatchPredictor;
 import org.ulpgc.dacd.business.control.predictor.OnnxMatchPredictor;
 import org.ulpgc.dacd.business.control.stats.EventStoreTeamStatsManager;
@@ -19,7 +17,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class BusinessUnitApp {
-
     private final String basePath;
 
     public BusinessUnitApp(String basePath) {
@@ -45,13 +42,11 @@ public class BusinessUnitApp {
             PredictionRepository repository = new SqlitePredictionRepository(dbPath);
 
             PredictionService predictionService = new PredictionService(statsManager, predictor);
-            BusinessController controller = new BusinessController(predictionService, repository);
 
             setupScheduledMaintenance(repository, trainer, statsManager, eventStorePath);
 
             System.out.println("\n--- ARRANCANDO ESCUCHADOR DE CUOTAS ---");
-            OddsReceiver receiver = new ActiveMQOddsReceiver("tcp://localhost:61616", "FootballOdd", controller::processOddsMessage);
-            receiver.start();
+            new BusinessController(predictionService, repository);
 
         } catch (Exception e) {
             System.err.println("❌ Error crítico al arrancar el sistema: " + e.getMessage());
