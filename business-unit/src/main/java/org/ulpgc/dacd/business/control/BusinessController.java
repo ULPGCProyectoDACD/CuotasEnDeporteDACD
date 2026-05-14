@@ -11,14 +11,13 @@ public class BusinessController {
     private final PredictionService predictionService;
     private final PredictionRepository repository;
     private final Gson gson;
-    private final OddsReceiver receiver;
 
     public BusinessController(PredictionService predictionService, PredictionRepository repository) {
         this.predictionService = predictionService;
         this.repository = repository;
         this.gson = new Gson();
-        this.receiver = new ActiveMQOddsReceiver("tcp://localhost:61616", "FootballOdd", this::processOddsMessage);
-        this.receiver.start();
+        OddsReceiver receiver = new ActiveMQOddsReceiver("tcp://localhost:61616", "FootballOdd", this::processOddsMessage);
+        receiver.start();
     }
 
     private void processOddsMessage(String rawJson) {
