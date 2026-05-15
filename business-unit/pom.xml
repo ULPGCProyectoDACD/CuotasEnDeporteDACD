@@ -9,7 +9,7 @@
         <version>v1.0.0</version>
     </parent>
 
-    <artifactId>frontend</artifactId>
+    <artifactId>business-unit</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -55,7 +55,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.ulpgc.dacd.frontend.Main</mainClass>
+                                    <mainClass>org.ulpgc.dacd.business.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

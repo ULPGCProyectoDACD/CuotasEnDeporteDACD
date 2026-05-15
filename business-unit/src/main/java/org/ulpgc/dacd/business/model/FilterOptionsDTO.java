@@ -1,4 +1,4 @@
-package org.ulpgc.dacd.frontend.model;
+package org.ulpgc.dacd.business.model;
 
 import java.util.List;
 

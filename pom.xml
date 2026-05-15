@@ -21,7 +21,7 @@
         <module>results</module>
         <module>event-store-builder</module>
         <module>datamart-builder</module>
-        <module>frontend</module>
+        <module>business-unit</module>
     </modules>
 
 </project>

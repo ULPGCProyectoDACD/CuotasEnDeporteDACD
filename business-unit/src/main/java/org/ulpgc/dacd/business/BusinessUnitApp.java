@@ -1,14 +1,14 @@
-package org.ulpgc.dacd.frontend;
+package org.ulpgc.dacd.business;
 
 import io.javalin.Javalin;
-import org.ulpgc.dacd.frontend.controller.PredictionController;
-import org.ulpgc.dacd.frontend.repository.PredictionReader;
-import org.ulpgc.dacd.frontend.repository.SqlitePredictionReader;
-//import org.ulpgc.dacd.frontend.repository.MockPredictionReader;
+import org.ulpgc.dacd.business.controller.PredictionController;
+import org.ulpgc.dacd.business.repository.PredictionReader;
+import org.ulpgc.dacd.business.repository.SqlitePredictionReader;
+//import org.ulpgc.dacd.business.repository.MockPredictionReader; // <-- Corregido
 
 import java.util.Map;
 
-public class FrontendApp {
+public class BusinessUnitApp {
     private static final int PORT = 7070;
     private static final String DB_PATH = "database/predictions.db";
 
@@ -27,7 +27,7 @@ public class FrontendApp {
         app.get("/api/filters", controller::getFilters);
         app.get("/api/health", ctx -> ctx.json(Map.of(
                 "status", "ok",
-                "module", "frontend",
+                "module", "business-unit",
                 "port", PORT)));
 
         app.start(PORT);
@@ -35,7 +35,7 @@ public class FrontendApp {
         System.out.println("\n" +
                 "╔══════════════════════════════════════════════════════╗\n" +
                 "║                 CuotasEnDeporteDACD                  ║\n" +
-                "║   🌐 Frontend:  http://localhost:" + PORT + "        ║\n" +
+                "║   🌐 Business Unit:  http://localhost:" + PORT + "   ║\n" +
                 "╚══════════════════════════════════════════════════════╝\n");
     }
 }

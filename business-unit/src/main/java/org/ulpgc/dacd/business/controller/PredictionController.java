@@ -1,10 +1,10 @@
-package org.ulpgc.dacd.frontend.controller;
+package org.ulpgc.dacd.business.controller;
 
 import com.google.gson.Gson;
 import io.javalin.http.Context;
-import org.ulpgc.dacd.frontend.model.FilterOptionsDTO;
-import org.ulpgc.dacd.frontend.model.PredictionDTO;
-import org.ulpgc.dacd.frontend.repository.PredictionReader;
+import org.ulpgc.dacd.business.model.FilterOptionsDTO;
+import org.ulpgc.dacd.business.model.PredictionDTO;
+import org.ulpgc.dacd.business.repository.PredictionReader;
 
 import java.util.List;
 

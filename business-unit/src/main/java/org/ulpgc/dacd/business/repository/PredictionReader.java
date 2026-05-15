@@ -1,7 +1,7 @@
-package org.ulpgc.dacd.frontend.repository;
+package org.ulpgc.dacd.business.repository;
 
-import org.ulpgc.dacd.frontend.model.FilterOptionsDTO;
-import org.ulpgc.dacd.frontend.model.PredictionDTO;
+import org.ulpgc.dacd.business.model.FilterOptionsDTO;
+import org.ulpgc.dacd.business.model.PredictionDTO;
 
 import java.util.List;
 

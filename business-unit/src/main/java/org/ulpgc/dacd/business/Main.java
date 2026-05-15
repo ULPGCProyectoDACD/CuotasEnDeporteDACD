@@ -1,7 +1,7 @@
-package org.ulpgc.dacd.frontend;
+package org.ulpgc.dacd.business;
 
 public class Main {
     public static void main(String[] args) {
-        new FrontendApp().start();
+        new BusinessUnitApp().start();
     }
 }
