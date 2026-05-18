@@ -39,7 +39,7 @@ public class SqlitePredictionReader implements PredictionReader {
     public List<PredictionDTO> getPredictions(String team, String bookmaker) {
         StringBuilder sql = new StringBuilder(
                 "SELECT id, match_date, home_team, away_team, bookmaker, market, outcome, " +
-                        "odd_price, prob_home, prob_draw, prob_away, benefit_risk_index, timestamp " +
+                        "odd_price, prob_home, prob_draw, prob_away, benefit_risk_index, MAX(timestamp) as timestamp " +
                         "FROM predictions WHERE match_date >= ? ");
 
         List<String> params = new ArrayList<>();
@@ -56,6 +56,7 @@ public class SqlitePredictionReader implements PredictionReader {
             params.add(bookmaker);
         }
 
+        sql.append("GROUP BY home_team, away_team, match_date, bookmaker, outcome ");
         sql.append("ORDER BY benefit_risk_index DESC");
 
         List<PredictionDTO> results = new ArrayList<>();
