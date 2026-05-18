@@ -765,6 +765,10 @@
                 <div class="modal-odds-num">${pred.oddPrice.toFixed(2)}</div>
             </div>`).join('');
         dom.oddsModal.classList.remove('hidden'); document.body.style.overflow = 'hidden';
+        
+        const modalBox = dom.oddsModal.querySelector('.modal-box');
+        if (modalBox) modalBox.scrollTop = 0;
+        
         animateModal();
     }
 
