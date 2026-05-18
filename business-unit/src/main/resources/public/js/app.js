@@ -72,9 +72,9 @@
     };
 
     const SVG = {
-        calendar: `<svg class="meta-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="14" height="12" rx="2"/><path d="M1 7h14M5 1v4M11 1v4"/></svg>`,
-        building: `<svg class="meta-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14h12M3 14V7m10 7V7M1 7h14L8 2 1 7z"/><rect x="6" y="10" width="4" height="4" stroke-width="1.25"/></svg>`,
-        calendarDate: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;flex-shrink:0;stroke:var(--t3)"><rect x="1" y="3" width="14" height="12" rx="2"/><path d="M1 7h14M5 1v4M11 1v4"/></svg>`,
+        calendar: `<svg class="meta-svg" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="14" height="12" rx="2"/><path d="M1 7h14M5 1v4M11 1v4"/></svg>`,
+        building: `<svg class="meta-svg" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14h12M3 14V7m10 7V7M1 7h14L8 2 1 7z"/><rect x="6" y="10" width="4" height="4" stroke-width="1.25"/></svg>`,
+        calendarDate: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;flex-shrink:0;stroke:#fff"><rect x="1" y="3" width="14" height="12" rx="2"/><path d="M1 7h14M5 1v4M11 1v4"/></svg>`,
     };
 
     async function init() {
@@ -455,13 +455,13 @@
                         enabled: false,
                         external: (context) => {
                             const canvas = context.chart.canvas;
-                            const container = canvas.parentElement;
-                            let tooltipEl = container.querySelector('.chart-tooltip');
+                            let tooltipEl = document.getElementById('global-chart-tooltip');
 
                             if (!tooltipEl) {
                                 tooltipEl = document.createElement('div');
+                                tooltipEl.id = 'global-chart-tooltip';
                                 tooltipEl.className = 'chart-tooltip';
-                                container.appendChild(tooltipEl);
+                                document.body.appendChild(tooltipEl);
                             }
 
                             const tooltipModel = context.tooltip;
@@ -475,23 +475,37 @@
                                 const match = dataPoint.dataset.matches[dataPoint.dataIndex];
                                 if (match) {
                                     tooltipEl.innerHTML = `
-                                        <div class="tooltip-header">${dataPoint.label}</div>
-                                        <div class="tooltip-match">
-                                            <div class="tooltip-team">${teamLogoHTML(match.homeTeam)}<span>${esc(match.homeTeam)}</span></div>
-                                            <div class="tooltip-vs">VS</div>
-                                            <div class="tooltip-team">${teamLogoHTML(match.awayTeam)}<span>${esc(match.awayTeam)}</span></div>
+                                        <div class="tooltip-header">
+                                            ${SVG.calendarDate}
+                                            <span>${dataPoint.label}</span>
                                         </div>
-                                        <div class="tooltip-value">
-                                            <span class="tooltip-lbl">VALOR</span>
-                                            <span class="tooltip-val">${fixed(match.benefitRiskIndex)}</span>
+                                        <div class="tooltip-match">
+                                            <div class="tooltip-team">
+                                                ${teamLogoHTML(match.homeTeam)}
+                                                <span class="tooltip-team-name">${esc(match.homeTeam)}</span>
+                                            </div>
+                                            <div class="tooltip-vs">VS</div>
+                                            <div class="tooltip-team">
+                                                ${teamLogoHTML(match.awayTeam)}
+                                                <span class="tooltip-team-name">${esc(match.awayTeam)}</span>
+                                            </div>
+                                        </div>
+                                        <div class="tooltip-footer">
+                                            <div class="tooltip-value-box">
+                                                <span class="tooltip-lbl">ÍNDICE DE VALOR</span>
+                                                <span class="tooltip-val ${riskColorClass(match.benefitRiskIndex)}">
+                                                    ${match.benefitRiskIndex >= 0 ? '+' : ''}${fixed(match.benefitRiskIndex)}
+                                                </span>
+                                            </div>
                                         </div>
                                     `;
                                 }
                             }
 
+                            const rect = canvas.getBoundingClientRect();
                             tooltipEl.style.display = 'block';
-                            tooltipEl.style.left = tooltipModel.caretX + 'px';
-                            tooltipEl.style.top = tooltipModel.caretY + 'px';
+                            tooltipEl.style.left = (rect.left + window.scrollX + tooltipModel.caretX) + 'px';
+                            tooltipEl.style.top = (rect.top + window.scrollY + tooltipModel.caretY) + 'px';
                         }
                     }
                 },
