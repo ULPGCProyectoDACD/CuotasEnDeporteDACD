@@ -634,7 +634,8 @@ flowchart TD
     Predictor --> Model
     App --> Controller["Business<br/>Controller"]
     Controller --> Receiver["ActiveMQ<br/>OddsReceiver"]
-    Receiver --> Broker["Topic<br/>FootballOdd"]
+    Broker["Topic<br/>FootballOdd"] --> Receiver
+    Receiver --> Controller
     Controller --> Service["Prediction<br/>Service"]
     Service --> Predictor
     Service --> Stats
