@@ -320,6 +320,8 @@ El orden de arranque usado en el proyecto prioriza que `datamart-builder` quede 
 
 Para que `datamart-builder` pueda entrenar el modelo al arrancar, el directorio `eventstore/FootballResult/feeder-results` debe contener histórico previo o debe existir ya `models/match_model.onnx`. Si se parte de un repositorio totalmente limpio, primero habrá que generar resultados históricos en el Event Store.
 
+Los resultados publicados por `results` después del arranque se conservarán en el Event Store. Para que esos nuevos partidos se incorporen al modelo y a las estadísticas en memoria, se puede reiniciar `datamart-builder` o esperar al mantenimiento programado diario.
+
 ### Ejecución desde IntelliJ IDEA
 
 Crear una configuración por módulo con estas clases `Main`:
@@ -450,7 +452,52 @@ Incluye:
 - Estadísticas agregadas: total de cuotas, value bets, mejor índice y riesgo medio.
 - Gráficos con Chart.js.
 - Modal con cuotas disponibles para un mismo partido.
+- Estado de conexión (`Data Syncing` / `Offline`) según la disponibilidad de la API REST.
 - Refresco automático cada 30 segundos.
+
+### Capturas del Dashboard
+
+Vista global con métricas agregadas y gráficos de distribución:
+
+<p align="center">
+  <img src="docs/dashboard/dashboard-01.png" alt="Vista global del dashboard" width="900" />
+</p>
+
+Ranking de cuotas recomendadas con tarjetas destacadas:
+
+<p align="center">
+  <img src="docs/dashboard/dashboard-02.png" alt="Ranking global de cuotas recomendadas" width="900" />
+</p>
+
+Análisis filtrado por equipo:
+
+<p align="center">
+  <img src="docs/dashboard/dashboard-03.png" alt="Vista del dashboard filtrada por equipo" width="900" />
+</p>
+
+Cuotas recomendadas para un equipo concreto:
+
+<p align="center">
+  <img src="docs/dashboard/dashboard-04.png" alt="Ranking de cuotas recomendadas por equipo" width="900" />
+</p>
+
+Análisis filtrado por casa de apuestas:
+
+<p align="center">
+  <img src="docs/dashboard/dashboard-05.png" alt="Vista del dashboard filtrada por casa de apuestas" width="900" />
+</p>
+
+Cuotas recomendadas para una casa de apuestas concreta:
+
+<p align="center">
+  <img src="docs/dashboard/dashboard-06.png" alt="Ranking de cuotas recomendadas por bookmaker" width="900" />
+</p>
+
+Tabla paginada con el resto de predicciones:
+
+<p align="center">
+  <img src="docs/dashboard/dashboard-07.png" alt="Tabla de predicciones del dashboard" width="700" />
+</p>
 
 ---
 
@@ -733,6 +780,7 @@ El proyecto está diseñado como prototipo académico. Sus limitaciones actuales
 | `No se encuentra el ejecutable de Python` | No existe `machine-learning/venv` | Crear el venv e instalar `requirements.txt` |
 | `No se ha podido localizar la carpeta eventstore` | `datamart-builder` se ejecutó desde una ubicación incorrecta | Ejecutar el módulo desde la raíz del proyecto |
 | Dashboard vacío | No hay predicciones en SQLite | Comprobar que `datamart-builder`, `event-store-builder`, `results` y `odds` están activos con ActiveMQ |
+| Estado `Offline` en el Dashboard | La API REST no responde o devuelve error | Verificar que `business-unit` está ejecutándose en `http://localhost:7070` |
 | Error de conexión JMS | ActiveMQ no está arrancado | Iniciar ActiveMQ en `tcp://localhost:61616` |
 | API devuelve 401/403 | API key inválida o cuota agotada | Revisar tokens de The Odds API o Football-Data.org |
 | `business-unit` no lee datos | Ruta relativa a `database/predictions.db` incorrecta | Ejecutar desde la raíz del proyecto |

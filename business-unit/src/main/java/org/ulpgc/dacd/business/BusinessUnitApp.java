@@ -4,7 +4,7 @@ import io.javalin.Javalin;
 import org.ulpgc.dacd.business.controller.PredictionController;
 import org.ulpgc.dacd.business.repository.PredictionReader;
 import org.ulpgc.dacd.business.repository.SqlitePredictionReader;
-import org.ulpgc.dacd.business.repository.MockPredictionReader;
+//import org.ulpgc.dacd.business.repository.MockPredictionReader;
 
 import java.util.Map;
 
