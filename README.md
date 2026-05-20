@@ -334,44 +334,6 @@ Crear una configuración por módulo con estas clases `Main`:
 | `odds` | `org.ulpgc.dacd.Main` | `<THE_ODDS_API_KEY>` |
 | `business-unit` | `org.ulpgc.dacd.business.Main` | Sin argumentos |
 
-Orden recomendado:
-
-1. Ejecutar `datamart-builder`.
-2. Ejecutar `event-store-builder`.
-3. Ejecutar `results`.
-4. Ejecutar `odds`.
-5. Ejecutar `business-unit`.
-
-### Ejecución desde Terminal con Maven Exec
-
-Desde la raíz del proyecto:
-
-```bash
-mvn -pl datamart-builder org.codehaus.mojo:exec-maven-plugin:3.3.0:java -Dexec.mainClass="org.ulpgc.dacd.datamart.Main"
-```
-
-```bash
-mvn -pl event-store-builder org.codehaus.mojo:exec-maven-plugin:3.3.0:java -Dexec.mainClass="org.ulpgc.dacd.Main"
-```
-
-```bash
-mvn -pl results org.codehaus.mojo:exec-maven-plugin:3.3.0:java -Dexec.mainClass="org.ulpgc.dacd.Main" -Dexec.args="<FOOTBALL_DATA_API_KEY>"
-```
-
-```bash
-mvn -pl odds org.codehaus.mojo:exec-maven-plugin:3.3.0:java -Dexec.mainClass="org.ulpgc.dacd.Main" -Dexec.args="<THE_ODDS_API_KEY>"
-```
-
-```bash
-mvn -pl business-unit org.codehaus.mojo:exec-maven-plugin:3.3.0:java -Dexec.mainClass="org.ulpgc.dacd.business.Main"
-```
-
-El dashboard queda disponible en:
-
-```text
-http://localhost:7070
-```
-
 ---
 
 ## Ejemplos de Uso
