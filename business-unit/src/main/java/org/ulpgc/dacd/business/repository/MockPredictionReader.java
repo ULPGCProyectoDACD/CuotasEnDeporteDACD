@@ -56,30 +56,36 @@ public class MockPredictionReader implements PredictionReader {
 
             Instant matchDate = now.plus(random.nextInt(7), ChronoUnit.DAYS)
                                   .plus(random.nextInt(24), ChronoUnit.HOURS);
-            
-            // Probabilidades reales del "modelo" (suman 1.0)
-            double rHome = 0.2 + random.nextDouble() * 0.5;
-            double rDraw = 0.1 + random.nextDouble() * 0.2;
-            double rAway = 1.0 - rHome - rDraw;
 
-            // Para cada partido, generamos cuotas en todas las casas de apuestas
+            // Probabilidades del modelo con mínimos razonables (suman 1.0)
+            double rawHome = 0.25 + random.nextDouble() * 0.40;  // [0.25, 0.65]
+            double rawDraw = 0.15 + random.nextDouble() * 0.15;  // [0.15, 0.30]
+            double rawAway = Math.max(0.12, 1.0 - rawHome - rawDraw);
+            double total = rawHome + rawDraw + rawAway;
+            double rHome = rawHome / total;
+            double rDraw = rawDraw / total;
+            double rAway = rawAway / total;
+
             for (String bookie : BOOKMAKERS) {
-                // Cada casa tiene su propio margen (overround) entre 3% y 8%
                 double margin = 1.03 + random.nextDouble() * 0.05;
-                
-                // Las cuotas de la casa (el inverso de la prob con margen)
-                double priceHome = 1.0 / (rHome * margin + (random.nextDouble() - 0.5) * 0.1);
-                double priceDraw = 1.0 / (rDraw * margin + (random.nextDouble() - 0.5) * 0.05);
-                double priceAway = 1.0 / (rAway * margin + (random.nextDouble() - 0.5) * 0.1);
 
-                // Asegurar que las cuotas no sean absurdas (< 1.0)
-                priceHome = Math.max(1.1, priceHome);
-                priceDraw = Math.max(1.1, priceDraw);
-                priceAway = Math.max(1.1, priceAway);
+                double priceHome, priceDraw, priceAway;
 
-                // Generar entradas para los 3 resultados posibles (como haria el sistema real)
-                // Pero para simplificar el Dashboard, solemos mostrar la mejor oportunidad del partido
-                // Aqui generamos una entrada por cada posible resultado
+                // ~35% de casas ofrecerán cuotas con ventaja real (value bets)
+                if (random.nextDouble() < 0.35) {
+                    // Generar cuota que garantice bri positivo: price = multiplier / prob
+                    // multiplier > 1.0 → bri = (prob * price) - 1 = multiplier - 1 > 0
+                    double mult = 1.25 + random.nextDouble() * 0.35; // bri entre +0.25 y +0.60
+                    priceHome = Math.min(5.0, Math.max(1.10, mult / rHome));
+                    priceDraw = Math.min(5.0, Math.max(1.10, mult / rDraw));
+                    priceAway = Math.min(5.0, Math.max(1.10, mult / rAway));
+                } else {
+                    // Cuotas normales con margen de la casa (bri negativo o neutro)
+                    priceHome = Math.min(5.0, Math.max(1.10, 1.0 / (rHome * margin)));
+                    priceDraw = Math.min(5.0, Math.max(1.10, 1.0 / (rDraw * margin)));
+                    priceAway = Math.min(5.0, Math.max(1.10, 1.0 / (rAway * margin)));
+                }
+
                 data.add(createPrediction(idCounter++, matchDate, home, away, bookie, home, priceHome, rHome, rDraw, rAway));
                 data.add(createPrediction(idCounter++, matchDate, home, away, bookie, "Empate", priceDraw, rHome, rDraw, rAway));
                 data.add(createPrediction(idCounter++, matchDate, home, away, bookie, away, priceAway, rHome, rDraw, rAway));

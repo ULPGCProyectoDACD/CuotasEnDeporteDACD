@@ -195,10 +195,13 @@
     async function loadFilters() {
         try {
             const res = await fetch(`${API_BASE}/api/filters`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            filtersData = await res.json();
-        } catch (err) {
-            filtersData = { teams: ['Real Madrid', 'FC Barcelona', 'Sevilla', 'Athletic Club'], bookmakers: ['Bet365', 'Bwin', '1xBet'] };
+            if (res.ok) {
+                filtersData = await res.json();
+            } else {
+                filtersData = { teams: [], bookmakers: [] };
+            }
+        } catch {
+            filtersData = { teams: [], bookmakers: [] };
         }
     }
 
@@ -262,11 +265,15 @@
 
         try {
             const res = await fetch(buildUrl());
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            allPredictions = await res.json();
-            setStatus(true);
-        } catch (err) {
-            allPredictions = generateMockData(currentView, dom.filterSelect.value);
+            if (res.ok) {
+                allPredictions = await res.json();
+                setStatus(true);
+            } else {
+                allPredictions = [];
+                setStatus(false);
+            }
+        } catch {
+            allPredictions = [];
             setStatus(false);
         }
 
@@ -362,7 +369,6 @@
     }
 
     function renderTeamCharts(predictions) {
-        const team = dom.filterSelect.value || 'Seleccionado';
         setChartCopy(
             'Volumen de Cuotas por Resultado', 'Cantidad de cuotas analizadas a favor del Local, Empate o Visitante',
             'Predicción vs Casa de Apuestas', 'Porcentajes de acierto por resultado'
@@ -605,7 +611,7 @@
         };
     }
 
-    function axisOptions(indexAxis, label, signed) {
+    function axisOptions(indexAxis) {
         return {
             indexAxis, responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
@@ -765,10 +771,10 @@
                 <div class="modal-odds-num">${pred.oddPrice.toFixed(2)}</div>
             </div>`).join('');
         dom.oddsModal.classList.remove('hidden'); document.body.style.overflow = 'hidden';
-        
+
         const modalBox = dom.oddsModal.querySelector('.modal-box');
         if (modalBox) modalBox.scrollTop = 0;
-        
+
         animateModal();
     }
 
@@ -827,7 +833,7 @@
         destroyCharts();
     }
 
-    function setStatus(online) { dom.statusDot.className = `status-dot ${online ? 'online' : 'offline'}`; dom.statusText.textContent = online ? 'Data Syncing' : 'Local Mode'; }
+    function setStatus(online) { dom.statusDot.className = `status-dot ${online ? 'online' : 'offline'}`; dom.statusText.textContent = online ? 'Data Syncing' : 'Offline'; }
     function startAutoRefresh() { if (refreshTimer) clearInterval(refreshTimer); refreshTimer = setInterval(() => loadPredictions(true), REFRESH_MS); }
 
     function avgEntries(items, keyFn, valFn) {
@@ -840,15 +846,6 @@
         return [...map.entries()].map(([label, { sum, n }]) => ({ label, value: n ? sum / n : 0 }));
     }
 
-    function avgEntriesWithItems(items, keyFn, valFn) {
-        const map = new Map();
-        items.forEach(item => {
-            const key = keyFn(item); if (!key) return;
-            if (!map.has(key)) map.set(key, { sum: 0, n: 0, first: item });
-            const entry = map.get(key); entry.sum += valFn(item); entry.n++;
-        });
-        return [...map.entries()].map(([label, { sum, n, first }]) => ({ label, value: n ? sum / n : 0, first }));
-    }
 
     function maxEntries(items, keyFn, valFn) {
         const map = new Map();
@@ -860,7 +857,7 @@
         return [...map.entries()].map(([label, data]) => ({ label, value: data.value, match: data.match }));
     }
 
-    function rivalName(p, team) { return (!team) ? `${p.homeTeam} vs ${p.awayTeam}` : (p.homeTeam === team ? p.awayTeam : p.homeTeam); }
+
     function matchLabel(p) { return `${p.homeTeam} vs ${p.awayTeam}`; }
     function modelProbabilityForOutcome(p) { return isDrawOutcome(p.outcome) ? p.probDraw : (p.outcome === p.homeTeam ? p.probHome : p.probAway); }
     function avg(items, fn) { return items.length ? items.reduce((s, item) => s + fn(item), 0) / items.length : 0; }
@@ -885,24 +882,6 @@
         if (!teamName) return '';
         const fileName = teamName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, '');
         return `<img src="img/teams/${fileName}.svg" alt="" class="team-logo" onerror="handleImgErr(this, '${esc(teamName).replace(/'/g, "\\'")}')">`;
-    }
-
-    function generateMockData(view, filter) {
-        const teams = ['Real Madrid', 'FC Barcelona', 'Sevilla', 'Athletic Club'];
-        const data = [];
-        for (let i = 0; i < 45; i++) {
-            let h = view === 'team' ? filter : teams[i % 4];
-            let a = teams[(i + 1) % 4];
-            let probH = Math.random() * 0.6 + 0.2, probD = Math.random() * 0.3, probA = 1 - probH - probD;
-            let oPrice = (1 / probH) + (Math.random() * 0.5 - 0.2);
-            data.push({
-                matchDate: new Date(Date.now() + i * 86400000).toISOString(),
-                homeTeam: h, awayTeam: a, bookmaker: view === 'bookmaker' ? filter : ['Bet365', 'Bwin', '1xBet'][i % 3],
-                outcome: i % 2 === 0 ? h : 'Draw', oddPrice: oPrice, probHome: probH, probDraw: probD, probAway: probA,
-                benefitRiskIndex: (probH * oPrice) - 1 + (Math.random() * 0.4 - 0.2)
-            });
-        }
-        return data;
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
