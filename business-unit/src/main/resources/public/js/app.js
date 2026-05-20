@@ -645,8 +645,8 @@
         groups.forEach((group, i) => {
             const rank = i + 1; const p = group.best;
             const extra = group.all.length - 1;
-            const isHero = (rank === 1 || (groups.length === 2 && rank === 2)) && currentView !== 'team';
-            const isMainHero = rank === 1 && currentView !== 'team';
+            const isHero = (rank === 1 || (groups.length === 2 && rank === 2)) && (currentView !== 'team' || groups.length >= 3);
+            const isMainHero = rank === 1 && (currentView !== 'team' || groups.length >= 3);
 
             const card = document.createElement('div');
             card.className = `top-card rank-${rank}${isHero ? ' hero-style' : ''}${isMainHero ? ' main-hero' : ''}`;
