@@ -22,3 +22,41 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# SQLite database
+data/
+
+# Maven build output
+target/
+
+# VS Code
+.vscode/
+
+launch.json
+
+eventstore/
+
+*.mdj
+
+# Archivo de estado de los feeders (Watermarks)
+results/last_match_date.txt
+
+# Ficheros temporales y generados del laboratorio de Python
+machine-learning/historical_dataset.csv
+machine-learning/match_model.onnx
+
+# Entorno virtual de python
+machine-learning/venv/
+__pycache__/
+
+# Bases de datos locales
+database/
+*.db
+
+# Modelos de Machine Learning generados
+models/
+*.onnx

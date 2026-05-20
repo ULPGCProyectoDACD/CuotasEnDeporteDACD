@@ -1,0 +1,120 @@
+package org.ulpgc.dacd.control.feeder;
+
+import org.ulpgc.dacd.model.Match;
+import org.ulpgc.dacd.model.Team;
+import org.ulpgc.dacd.model.Referee;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+public class FootballDataOrgFeeder implements MatchFeeder {
+
+    private static final String API_URL = "https://api.football-data.org/v4/competitions/PD/matches";
+    private static final HttpClient CLIENT = HttpClient.newHttpClient();
+    private final String apiKey;
+
+    public FootballDataOrgFeeder(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    @Override
+    public List<Match> getMatches() {
+        try {
+            HttpResponse<String> response = fetchResponse();
+            if (response.statusCode() == 200) {
+                return parseMatches(response.body());
+            } else {
+                System.err.println("[FootballDataOrgFeeder] Error en la API. Código HTTP: " + response.statusCode());
+            }
+        } catch (Exception e) {
+            System.err.println("[FootballDataOrgFeeder] Error de conexión a Internet: " + e.getMessage());
+        }
+        return new ArrayList<>();
+    }
+
+    private HttpResponse<String> fetchResponse() throws Exception {
+        return CLIENT.send(buildRequest(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpRequest buildRequest() {
+        return HttpRequest.newBuilder()
+                .uri(URI.create(API_URL))
+                .header("X-Auth-Token", apiKey)
+                .GET()
+                .build();
+    }
+
+    private List<Match> parseMatches(String jsonString) {
+        List<Match> matches = new ArrayList<>();
+        JsonObject rootObject = JsonParser.parseString(jsonString).getAsJsonObject();
+        JsonArray matchesArray = rootObject.getAsJsonArray("matches");
+
+        Instant capturedAt = Instant.now();
+
+        if (matchesArray == null) return matches;
+
+        for (JsonElement element : matchesArray) {
+            JsonObject matchJson = element.getAsJsonObject();
+            if ("FINISHED".equals(matchJson.get("status").getAsString())) {
+                matches.add(parseMatch(matchJson, capturedAt));
+            }
+        }
+        return matches;
+    }
+
+    private Match parseMatch(JsonObject matchJson, Instant capturedAt) {
+        int id = matchJson.get("id").getAsInt();
+        String utcDateStr = matchJson.get("utcDate").getAsString();
+        Instant dateInstant = Instant.parse(utcDateStr);
+        String status = matchJson.get("status").getAsString();
+
+        Team homeTeam = parseTeam(matchJson.getAsJsonObject("homeTeam"));
+        Team awayTeam = parseTeam(matchJson.getAsJsonObject("awayTeam"));
+
+        JsonObject scoreJson = matchJson.getAsJsonObject("score");
+        JsonObject fullTimeJson = scoreJson.getAsJsonObject("fullTime");
+
+        Integer homeGoals = fullTimeJson.get("home").isJsonNull() ? null : fullTimeJson.get("home").getAsInt();
+        Integer awayGoals = fullTimeJson.get("away").isJsonNull() ? null : fullTimeJson.get("away").getAsInt();
+
+        Referee referee = parseReferee(matchJson.getAsJsonArray("referees"));
+
+        return new Match(
+                capturedAt.toString(),
+                "feeder-results",
+                id,
+                homeTeam,
+                awayTeam,
+                homeGoals,
+                awayGoals,
+                dateInstant.toString(),
+                status,
+                referee
+        );
+    }
+
+    private Team parseTeam(JsonObject teamJson) {
+        int id = teamJson.get("id").getAsInt();
+        String name = teamJson.get("name").getAsString();
+        String shortName = teamJson.get("shortName").isJsonNull() ? name : teamJson.get("shortName").getAsString();
+        return new Team(id, name, shortName);
+    }
+
+    private Referee parseReferee(JsonArray refereesArray) {
+        if (refereesArray == null || refereesArray.isEmpty()) {
+            return null;
+        }
+        JsonObject refJson = refereesArray.get(0).getAsJsonObject();
+        return new Referee(refJson.get("id").getAsInt(), refJson.get("name").getAsString());
+    }
+}
